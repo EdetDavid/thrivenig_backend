@@ -1,11 +1,11 @@
 
-from .models import Contact, Claim, NewsletterSubscription
+from .models import Contact, Claim, NewsletterSubscription, SubmitCv
 from django.core.mail import EmailMessage
 
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import CreateModelMixin, ListModelMixin
 
-from .serializers import ClaimSerializer, ContactSerializer, NewsletterSubscriptionSerializer
+from .serializers import ClaimSerializer, ContactSerializer, NewsletterSubscriptionSerializer, SubmitCvSerializer
 
 from django.conf import settings
 
@@ -96,6 +96,36 @@ class NewsletterSubscription(GenericAPIView, CreateModelMixin, ListModelMixin):
         except Exception as e:
             print(f"Failed to send email: {e}")
             raise
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class SubmitCv(GenericAPIView, CreateModelMixin, ListModelMixin):
+    queryset = SubmitCv.objects.all()
+    serializer_class = SubmitCvSerializer
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        cv_submission = serializer.save()
+        # Send email
+        subject = f'New CV Submitted by {cv_submission.email}'
+        message = f"Name: {cv_submission.name}\nEmail: {cv_submission.email}\nCover Letter: {cv_submission.cover_letter}"
+
+        email = EmailMessage(
+            subject,
+            message,
+            settings.EMAIL_HOST_USER,
+            ['davidedetnsikak@gmail.com']  # Replace with the recipient's email
+        )
+
+        if cv_submission.cv:
+            email.attach(cv_submission.cv.name, cv_submission.cv.read())
+
+        email.send(fail_silently=False)
+        print("CV Submitted Successfully")
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
