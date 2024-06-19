@@ -38,17 +38,6 @@ amadeus = Client(
 )
 
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [AllowAny]
-
-
-amadeus = Client(
-    client_id=settings.CLIENT_ID,
-    client_secret=settings.CLIENT_SECRET
-)
-
 
 # @api_view(['GET', 'POST'])
 # @permission_classes([IsAuthenticated])
