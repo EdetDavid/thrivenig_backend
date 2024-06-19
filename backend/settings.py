@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "demo.apps.DemoConfig",
     'corsheaders',
     'rest_framework',
+    "rest_framework.authtoken",
 ]
 
 MIDDLEWARE = [
@@ -52,6 +53,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -75,39 +77,54 @@ TEMPLATES = [
 WSGI_APPLICATION = "backend.wsgi.application"
 
 
+# Token Authentication and AUthorization
+
+
 # Amadeus Api
 CLIENT_ID = "LNCgkGOS2gsex21xG1RnpllQGaHwodig"
 CLIENT_SECRET = "Z5KRodc373AzGjGw"
 
 
 # david
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.office365.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'thrivenig.insurance@outlook.com'
-EMAIL_HOST_PASSWORD = '@insurance.thrivenig'
-EMAIL_USE_SSL = False
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp-mail.outlook.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'thrivenig.insurance@outlook.com'
+# EMAIL_HOST_PASSWORD = '@insurance.thrivenig'
+# EMAIL_USE_SSL = False
 
 
 # edet emmmanuel
 # SMTP settings for Office 365
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.office365.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'solutionhub13@outlook.com'
-# EMAIL_HOST_PASSWORD = '@Emmanuel13'
-# EMAIL_USE_SSL = False
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.office365.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'solutionhub13@outlook.com'
+EMAIL_HOST_PASSWORD = '@Emmanuel13'
+EMAIL_USE_SSL = False
 
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'verceldb',
+        'USER':   'default',
+        'PASSWORD': 'U4x1lViJHPEB',
+        'HOST': 'ep-blue-silence-a4rudrt2.us-east-1.aws.neon.tech',
+        'PORT': '5432'
     }
 }
 

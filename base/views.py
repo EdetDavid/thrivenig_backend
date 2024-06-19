@@ -36,6 +36,7 @@ class ReportClaim(GenericAPIView, CreateModelMixin, ListModelMixin):
                          )
 
         email.send(fail_silently=False)
+        print("Claim Reported Successfully")
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
@@ -52,7 +53,7 @@ class ContactMail(GenericAPIView, CreateModelMixin, ListModelMixin):
         contact = serializer.save()
         # Send email
         subject = f'New Contact from {contact.first_name}'
-          message = f"Name: {contact.first_name}\nEmail: {contact.email}\nPhone: {contact.phone}\nMessage: {contact.message}"
+        message = f"Name: {contact.first_name}\nEmail: {contact.email}\nPhone: {contact.phone}\n Message: {contact.message}"
 
         email = EmailMessage(
             subject,
@@ -62,6 +63,7 @@ class ContactMail(GenericAPIView, CreateModelMixin, ListModelMixin):
         )
 
         email.send(fail_silently=False)
+        print("Contact Mailed Successfully")
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

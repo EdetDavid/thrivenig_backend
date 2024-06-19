@@ -1,5 +1,6 @@
+
 from .views import ReportClaim, ContactMail, NewsletterSubscription
-from django.urls import path
+from django.urls import path, include
 
 
 urlpatterns = [
@@ -7,4 +8,5 @@ urlpatterns = [
     path('contact/', ContactMail.as_view(), name='contact'),
     path('newsletter/', NewsletterSubscription.as_view(),
          name='newsletter-subscribe'),
+
 ]
