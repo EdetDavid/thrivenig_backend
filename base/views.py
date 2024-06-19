@@ -52,7 +52,7 @@ class ContactMail(GenericAPIView, CreateModelMixin, ListModelMixin):
         contact = serializer.save()
         # Send email
         subject = f'New Contact from {contact.first_name}'
-        message = f"Name: {contact.first_name}\nEmail: {contact.email}\nPhone: {contact.phone}"
+          message = f"Name: {contact.first_name}\nEmail: {contact.email}\nPhone: {contact.phone}\n Message: {contact.message}"
 
         email = EmailMessage(
             subject,
@@ -65,35 +65,6 @@ class ContactMail(GenericAPIView, CreateModelMixin, ListModelMixin):
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
-
-
-# views.py
-
-# class NewsletterSubscription(GenericAPIView, CreateModelMixin, ListModelMixin):
-#     queryset = NewsletterSubscription.objects.all()
-#     serializer_class = NewsletterSubscriptionSerializer
-
-#     def post(self, request, *args, **kwargs):
-#         return self.create(request, *args, **kwargs)
-
-#     def perform_create(self, serializer):
-#         newsletter = serializer.save()
-
-#         subject = f'New Subscriber with email {newsletter.email}'
-#         message = f" {newsletter.email} " " just subscibed to our newsletter"
-
-#         email = EmailMessage(
-#             subject,
-#             message,
-#             settings.EMAIL_HOST_USER,
-#             ['davidedetnsikak@gmail.com']  # Replace with the recipient's email
-#         )
-
-#         email.send(fail_silently=False)
-#         print("Subscribed successfully")
-
-#     def get(self, request, *args, **kwargs):
-#         return self.list(request, *args, **kwargs)
 
 
 class NewsletterSubscription(GenericAPIView, CreateModelMixin, ListModelMixin):
