@@ -28,3 +28,14 @@ class NewsletterSubscription(models.Model):
 
     def __str__(self):
         return self.email
+
+
+class SubmitCv(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    cv = models.FileField(upload_to='cvs/')
+    cover_letter = models.CharField(max_length=2500)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name

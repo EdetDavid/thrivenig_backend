@@ -1,6 +1,6 @@
 
 from rest_framework import serializers
-from .models import Claim, Contact, NewsletterSubscription
+from .models import Claim, Contact, NewsletterSubscription, SubmitCv
 
 from django.contrib.auth.models import User
 from rest_framework.authtoken.views import Token
@@ -37,3 +37,9 @@ class UserSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         Token.objects.create(user=user)
         return user
+
+
+class SubmitCvSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubmitCv
+        fields = '__all__'
