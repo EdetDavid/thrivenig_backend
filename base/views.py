@@ -52,7 +52,7 @@ class ContactMail(GenericAPIView, CreateModelMixin, ListModelMixin):
         contact = serializer.save()
         # Send email
         subject = f'New Contact from {contact.first_name}'
-          message = f"Name: {contact.first_name}\nEmail: {contact.email}\nPhone: {contact.phone}\n Message: {contact.message}"
+          message = f"Name: {contact.first_name}\nEmail: {contact.email}\nPhone: {contact.phone}\nMessage: {contact.message}"
 
         email = EmailMessage(
             subject,
