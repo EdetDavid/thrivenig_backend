@@ -118,7 +118,8 @@ class SubmitCv(GenericAPIView, CreateModelMixin, ListModelMixin):
             subject,
             message,
             settings.EMAIL_HOST_USER,
-            ['davidedetnsikak@gmail.com']  # Replace with the recipient's email
+            # Replace with the recipient's email
+            ['davidedetnsikak@gmail.com', 'oghenekome.ogbe@thrivenig.com']
         )
 
         if cv_submission.cv:

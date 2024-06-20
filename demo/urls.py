@@ -11,7 +11,7 @@ router.register('users', views.UserViewSet, )
 
 urlpatterns = [
     path('', views.demo, name='home'),
-    path('api/flight-search/', views.flight, name='flight-search'),
+    path('api/flight-search', views.flight, name='flight-search'),
 
     path('origin_airport_search/', views.origin_airport_search,
          name='origin_airport_search'),

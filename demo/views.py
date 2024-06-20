@@ -38,7 +38,6 @@ amadeus = Client(
 )
 
 
-
 # @api_view(['GET', 'POST'])
 # @permission_classes([IsAuthenticated])
 # @authentication_classes([TokenAuthentication])
