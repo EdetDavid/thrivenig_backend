@@ -77,7 +77,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "backend.wsgi.application"
 
 
-
+# Token Authentication and AUthorization
 
 
 # Amadeus Api
@@ -122,8 +122,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'verceldb',
         'USER':   'default',
-        'PASSWORD': 'U4x1lViJHPEB',
-        'HOST': 'ep-blue-silence-a4rudrt2.us-east-1.aws.neon.tech',
+        'PASSWORD': 'BtvHI4seiR8D',
+        'HOST': 'ep-round-recipe-a292exgk.eu-central-1.aws.neon.tech',
         'PORT': '5432'
     }
 }
