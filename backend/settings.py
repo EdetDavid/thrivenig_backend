@@ -72,6 +72,7 @@ TEMPLATES = [
             ],
         },
     },
+
 ]
 
 WSGI_APPLICATION = "backend.wsgi.application"
@@ -86,23 +87,12 @@ CLIENT_SECRET = "Z5KRodc373AzGjGw"
 
 
 # david
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp-mail.outlook.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'thrivenig.insurance@outlook.com'
-# EMAIL_HOST_PASSWORD = '@insurance.thrivenig'
-# EMAIL_USE_SSL = False
-
-
-# edet emmmanuel
-# SMTP settings for Office 365
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.office365.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'solutionhub13@outlook.com'
-EMAIL_HOST_PASSWORD = '@Emmanuel13'
+EMAIL_HOST_USER = 'thrivenig.website@outlook.com'
+EMAIL_HOST_PASSWORD = '@thrivenig.webmail'
 EMAIL_USE_SSL = False
 
 
