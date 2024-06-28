@@ -38,7 +38,6 @@ amadeus = Client(
 )
 
 
-
 # @api_view(['GET', 'POST'])
 # @permission_classes([IsAuthenticated])
 # @authentication_classes([TokenAuthentication])
@@ -270,37 +269,37 @@ def flight(request):
             'tripPurpose': tripPurpose,
         }
 
-        # Prepare email content
-        email_subject = 'Flight Search Details'
-        email_message = f'''
-        Hello {'username'},
+        # # Prepare email content
+        # email_subject = 'Flight Search Details'
+        # email_message = f'''
+        # Hello {'username'},
 
-        Here are the details of your flight search:
+        # Here are the details of your flight search:
 
-        Origin: {origin}
-        Destination: {destination}
-        Departure Date: {departureDate}
-        Return Date: {returnDate}
-        Adults: {adults}
-        Children: {children}
-        Infants: {infants}
+        # Origin: {origin}
+        # Destination: {destination}
+        # Departure Date: {departureDate}
+        # Return Date: {returnDate}
+        # Adults: {adults}
+        # Children: {children}
+        # Infants: {infants}
 
-        Thank you for using our service!
+        # Thank you for using our service!
 
-        Best regards,
-        Your Company
-        '''
+        # Best regards,
+        # Your Company
+        # '''
 
-        # Send email
-        send_mail(
-            email_subject,
-            email_message,
-            settings.EMAIL_HOST_USER,
-            # Replace with the recipient's email
-            ['davidedetnsikak@gmail.com'],
-            fail_silently=False,
-        )
-        print("Booked successfully")
+        # # Send email
+        # send_mail(
+        #     email_subject,
+        #     email_message,
+        #     settings.EMAIL_HOST_USER,
+        #     # Replace with the recipient's email
+        #     ['davidedetnsikak@gmail.com'],
+        #     fail_silently=False,
+        # )
+        # print("Booked successfully")
 
         return JsonResponse(response_data)
 
