@@ -139,7 +139,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",  # React app running on localhost
+    "http://localhost:3000",
+    "https://travels.thrivenig.com",
 
 # ]
 
