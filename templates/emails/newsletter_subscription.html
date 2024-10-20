@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #FFFFFF;
+            color: #181433;
+            padding: 20px;
+        }
+        .header {
+            background-color: #ED1C24;
+            padding: 10px;
+            text-align: center;
+            color: #FFFFFF;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .content {
+            margin-top: 20px;
+        }
+        .content p {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #181433;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">New Newsletter Subscription</div>
+    <div class="content">
+        <p>Email <strong>{{ email }}</strong> has subscribed to the newsletter.</p>
+    </div>
+    <div class="footer">
+        <p>This is an automated message. Please do not reply.</p>
+    </div>
+</body>
+</html>
