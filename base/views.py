@@ -10,11 +10,6 @@ from .serializers import ClaimSerializer, ContactSerializer, NewsletterSubscript
 from django.conf import settings
 
 
-from django.template.loader import render_to_string
-
-
-
-
 class ReportClaim(GenericAPIView, CreateModelMixin, ListModelMixin):
     queryset = Claim.objects.all()
     serializer_class = ClaimSerializer
@@ -24,26 +19,27 @@ class ReportClaim(GenericAPIView, CreateModelMixin, ListModelMixin):
 
     def perform_create(self, serializer):
         claim = serializer.save()
-        # Render email template with context
+        # Send email
         subject = f'New Claim Reported by {claim.email}'
-        context = {
-            'claim': claim
-        }
-        message_html = render_to_string('emails/claim_report.html', context)
+        message = f"Insured: {claim.insured}\nPolicy Number: {claim.policy_number}\nEmail: {claim.email}\nPhone: {claim.phone}"
 
         email = EmailMessage(
             subject,
-            message_html,
+            message,
             settings.EMAIL_HOST_USER,
             ['dvooskid12345@gmail.com']  # Replace with the recipient's email
         )
-        email.content_subtype = "html"  # To send HTML email
 
         if claim.file:
-            email.attach(claim.file.name, claim.file.read())
+            email.attach(claim.file.name, claim.file.read(),
+
+                         )
 
         email.send(fail_silently=False)
         print("Claim Reported Successfully")
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
 
 class ContactMail(GenericAPIView, CreateModelMixin, ListModelMixin):
@@ -55,23 +51,22 @@ class ContactMail(GenericAPIView, CreateModelMixin, ListModelMixin):
 
     def perform_create(self, serializer):
         contact = serializer.save()
-        # Render email template with context
+        # Send email
         subject = f'New Contact from {contact.first_name}'
-        context = {
-            'contact': contact
-        }
-        message_html = render_to_string('emails/contact_mail.html', context)
+        message = f"Name: {contact.first_name}\nEmail: {contact.email}\nPhone: {contact.phone}\n Message: {contact.message}"
 
         email = EmailMessage(
             subject,
-            message_html,
+            message,
             settings.EMAIL_HOST_USER,
             ['dvooskid12345@gmail.com']  # Replace with the recipient's email
         )
-        email.content_subtype = "html"  # To send HTML email
 
         email.send(fail_silently=False)
         print("Contact Mailed Successfully")
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
 
 class NewsletterSubscription(GenericAPIView, CreateModelMixin, ListModelMixin):
@@ -83,20 +78,16 @@ class NewsletterSubscription(GenericAPIView, CreateModelMixin, ListModelMixin):
 
     def perform_create(self, serializer):
         email = serializer.validated_data['email']
-        # Render email template with context
+
         subject = f'New Subscriber with email {email}'
-        context = {
-            'email': email
-        }
-        message_html = render_to_string('emails/newsletter_subscription.html', context)
+        message = f"{email} \t just subscribed to our newsletter"
 
         email_message = EmailMessage(
             subject,
-            message_html,
+            message,
             settings.EMAIL_HOST_USER,
             ['dvooskid12345@gmail.com']  # Replace with the recipient's email
         )
-        email_message.content_subtype = "html"  # To send HTML email
 
         try:
             email_message.send(fail_silently=False)
@@ -105,6 +96,9 @@ class NewsletterSubscription(GenericAPIView, CreateModelMixin, ListModelMixin):
         except Exception as e:
             print(f"Failed to send email: {e}")
             raise
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
 
 class SubmitCv(GenericAPIView, CreateModelMixin, ListModelMixin):
@@ -116,20 +110,16 @@ class SubmitCv(GenericAPIView, CreateModelMixin, ListModelMixin):
 
     def perform_create(self, serializer):
         cv_submission = serializer.save()
-        # Render email template with context
+        # Send email
         subject = f'New CV Submitted by {cv_submission.email}'
-        context = {
-            'cv_submission': cv_submission
-        }
-        message_html = render_to_string('emails/submit_cv.html', context)
+        message = f"Name: {cv_submission.name}\nEmail: {cv_submission.email}\nCover Letter: {cv_submission.cover_letter}"
 
         email = EmailMessage(
             subject,
-            message_html,
+            message,
             settings.EMAIL_HOST_USER,
             ['dvooskid12345@gmail.com']  # Replace with the recipient's email
         )
-        email.content_subtype = "html"  # To send HTML email
 
         if cv_submission.cv:
             email.attach(cv_submission.cv.name, cv_submission.cv.read())
@@ -137,3 +127,5 @@ class SubmitCv(GenericAPIView, CreateModelMixin, ListModelMixin):
         email.send(fail_silently=False)
         print("CV Submitted Successfully")
 
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)

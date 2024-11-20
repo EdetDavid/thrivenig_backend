@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Claim,  Contact, NewsletterSubscription
+from .models import Claim,  Contact, NewsletterSubscription, SubmitCv
 
 # Register your models here.
 
@@ -20,3 +20,9 @@ class ContactAdmin(admin.ModelAdmin):
 class NewsletterAdmin(admin.ModelAdmin):
     list_display = ('email',)
     search_fields = ('email',)
+
+
+@admin.register(SubmitCv)
+class SubmitCvAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'created_at')
+    search_fields = ('name', 'email',)
