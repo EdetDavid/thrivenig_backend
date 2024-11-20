@@ -98,24 +98,24 @@ EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
-
-
 # DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'verceldb',
-#         'USER':   'default',
-#         'PASSWORD': 'U4x1lViJHPEB',
-#         'HOST': 'ep-blue-silence-a4rudrt2.us-east-1.aws.neon.tech',
-#         'PORT': '5432'
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
 #     }
 # }
+
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'verceldb',
+        'USER':   'default',
+        'PASSWORD': 'U4x1lViJHPEB',
+        'HOST': 'ep-blue-silence-a4rudrt2.us-east-1.aws.neon.tech',
+        'PORT': '5432'
+    }
+}
 
 
 # Password validation
