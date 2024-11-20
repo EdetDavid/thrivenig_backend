@@ -1,3 +1,4 @@
+from pathlib import Path
 import os
 import environ
 
@@ -12,10 +13,6 @@ environ.Env.read_env(os.path.join(os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))), '.env'))
 
 
-
-
-from pathlib import Path
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -24,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-c#z*)e8#ft*g=35l!sxi$$ia2vnd53-g$!@c#od@-yeh@bu@$1"
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -81,9 +78,6 @@ TEMPLATES = [
 WSGI_APPLICATION = "backend.wsgi.application"
 
 
-
-
-
 # Amadeus Api
 CLIENT_ID = "LNCgkGOS2gsex21xG1RnpllQGaHwodig"
 CLIENT_SECRET = "Z5KRodc373AzGjGw"
@@ -100,8 +94,6 @@ EMAIL_BACKEND = 'django_ses.SESBackend'
 EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 
 
-
-
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
@@ -112,7 +104,6 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
-
 
 
 # DATABASES = {
