@@ -27,7 +27,7 @@ class ReportClaim(GenericAPIView, CreateModelMixin, ListModelMixin):
             subject,
             message,
             settings.EMAIL_HOST_USER,
-            ['dvooskid12345@gmail.com']  # Replace with the recipient's email
+            ['dvooskid12345@gmail.com', 'infoinsurance@thrivenig.com', 'infotravels@thrivenig.com']  # Replace with the recipient's email
         )
 
         if claim.file:
@@ -59,7 +59,7 @@ class ContactMail(GenericAPIView, CreateModelMixin, ListModelMixin):
             subject,
             message,
             settings.EMAIL_HOST_USER,
-            ['dvooskid12345@gmail.com']  # Replace with the recipient's email
+            ['dvooskid12345@gmail.com', 'infoinsurance@thrivenig.com', 'infotravels@thrivenig.com']  # Replace with the recipient's email
         )
 
         email.send(fail_silently=False)
@@ -86,7 +86,7 @@ class NewsletterSubscription(GenericAPIView, CreateModelMixin, ListModelMixin):
             subject,
             message,
             settings.EMAIL_HOST_USER,
-            ['dvooskid12345@gmail.com']  # Replace with the recipient's email
+            ['dvooskid12345@gmail.com', 'infoinsurance@thrivenig.com', 'infotravels@thrivenig.com']  # Replace with the recipient's email
         )
 
         try:
@@ -118,7 +118,7 @@ class SubmitCv(GenericAPIView, CreateModelMixin, ListModelMixin):
             subject,
             message,
             settings.EMAIL_HOST_USER,
-            ['dvooskid12345@gmail.com']  # Replace with the recipient's email
+            ['dvooskid12345@gmail.com', 'infoinsurance@thrivenig.com', 'infotravels@thrivenig.com']  # Replace with the recipient's email
         )
 
         if cv_submission.cv:
