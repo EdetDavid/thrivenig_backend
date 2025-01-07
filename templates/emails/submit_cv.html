@@ -8,45 +8,82 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            font-family: 'Roboto', Arial, sans-serif;
-            background: linear-gradient(135deg, #74EBD5, #9FACE6);
-            color: #2C3E50;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            color: #2c3e50;
             margin: 0;
             padding: 20px;
+            line-height: 1.6;
         }
 
         .card {
             border: none;
-            border-left: 8px solid #E74C3C;
-            border-radius: 10px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
         }
 
         .card-header {
-            background-color: #34495E;
-            color: #ECF0F1;
-            font-size: 24px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            text-align: center;
+            background-color: #2c3e50;
+            color: #ffffff;
+            font-size: 1.5rem;
+            font-weight: 600;
+            padding: 1.25rem;
+            border-radius: 12px 12px 0 0;
         }
 
-        .card-body p {
-            font-size: 18px;
-            margin-bottom: 20px;
+        .card-body {
+            padding: 2rem;
+        }
+
+        .applicant-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-item {
+            margin-bottom: 1rem;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #34495e;
+            min-width: 100px;
+            display: inline-block;
+        }
+
+        .cover-letter-section {
+            background-color: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .cover-letter-header {
+            font-size: 1.25rem;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .cover-letter-content {
+            white-space: pre-line;
             line-height: 1.8;
-        }
-
-        .card-body strong {
-            color: #E74C3C;
+            color: #495057;
         }
 
         .footer {
             text-align: center;
-            font-size: 14px;
-            color: #7F8C8D;
-            margin-top: 20px;
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-top: 2rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
         }
     </style>
 </head>
@@ -59,15 +96,26 @@
                         New CV Submission
                     </div>
                     <div class="card-body">
-                        <p>A new CV has been submitted with the following details:</p>
-                        <p><strong>Name:</strong> {{ cv_submission.name }}</p>
-                        <p><strong>Email:</strong> {{ cv_submission.email }}</p>
-                        <p><strong>Phone:</strong> {{ cv_submission.phone }}</p>
-                        <p><strong>Position Applied For:</strong> {{ cv_submission.position_applied }}</p>
+                        <div class="applicant-info">
+                            <div class="info-item">
+                                <span class="info-label">Name: {{ cv.name }}</span>  
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Email:  {{ cv.email }} </span> 
+                            </div>
+                        </div>
+
+                        <div class="cover-letter-section">
+                            <h3 class="cover-letter-header">Cover Letter</h3>
+                            <div class="cover-letter-content">
+                                {{ cv.cover_letter }}
+                            </div>
+                        </div>
                     </div>
                 </div>
+                
                 <div class="footer">
-                    <p>This is an automated message from our system. Please do not reply.</p>
+                    <p class="mb-0">This is an automated message. Please do not reply to this email.</p>
                 </div>
             </div>
         </div>
