@@ -83,17 +83,28 @@ CLIENT_ID = "LNCgkGOS2gsex21xG1RnpllQGaHwodig"
 CLIENT_SECRET = "Z5KRodc373AzGjGw"
 
 
-# AWS Credentials and SES Configurationbefore i used this guy
-AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')  #
-AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
-AWS_SES_REGION_NAME = env('AWS_SES_REGION_NAME')
-AWS_SES_REGION_ENDPOINT = env('AWS_SES_REGION_ENDPOINT')
+# Email configuration — prefer environment values and Brevo (Sendinblue) SMTP by default.
+# Optional: set BREVO_API_KEY if you want to send via Brevo REST API instead of SMTP.
+EMAIL_SERVICE = env('EMAIL_SERVICE', default='sendinblue').lower()
+BREVO_API_KEY = env('BREVO_API_KEY', default='')  # xkeysib-... (optional, for REST)
 
-# Email Backend Configuration
-EMAIL_BACKEND = 'django_ses.SESBackend'
-EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+if EMAIL_SERVICE == 'sendinblue' or EMAIL_SERVICE == 'brevo':
+    # Brevo / Sendinblue SMTP
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = env('EMAIL_HOST', default='smtp-relay.brevo.com')
+    EMAIL_PORT = env('EMAIL_PORT', default=587)
+    # For many Brevo accounts use 'apikey' as the SMTP user; otherwise set the provided SMTP user
+    EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='apikey')
+    EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')  # xsmtpsib-...
+    EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', True)
 
-
+elif EMAIL_SERVICE == 'ses':
+    # keep SES option if you still want it
+    EMAIL_BACKEND = 'django_ses.SESBackend'
+    EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+else:
+    # fallback to console during development if misconfigured
+    EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
@@ -105,17 +116,6 @@ DATABASES = {
     }
 }
 
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'verceldb',
-#         'USER':   'default',
-#         'PASSWORD': 'U4x1lViJHPEB',
-#         'HOST': 'ep-blue-silence-a4rudrt2.us-east-1.aws.neon.tech',
-#         'PORT': '5432'
-#     }
-# }
 
 
 # Password validation
