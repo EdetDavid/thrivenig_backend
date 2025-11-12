@@ -4,7 +4,12 @@ from .models import Contact, Claim, NewsletterSubscription, SubmitCv
 from django.core.mail import EmailMultiAlternatives
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import CreateModelMixin, ListModelMixin
-from .serializers import ClaimSerializer, ContactSerializer, NewsletterSubscriptionSerializer, SubmitCvSerializer
+from .serializers import (
+    ClaimSerializer,
+    ContactSerializer,
+    NewsletterSubscriptionSerializer,
+    SubmitCvSerializer,
+)
 from django.conf import settings
 
 
@@ -18,18 +23,19 @@ class ReportClaim(GenericAPIView, CreateModelMixin, ListModelMixin):
     def perform_create(self, serializer):
         claim = serializer.save()
 
-        html_content = render_to_string(
-            'emails/claim_report.html', {'claim': claim})
+        html_content = render_to_string("emails/claim_report.html", {"claim": claim})
         plain_message = strip_tags(html_content)
 
-        subject = f'New Claim Reported by {claim.email}'
+        subject = f"New Claim Reported by {claim.email}"
         email = EmailMultiAlternatives(
             subject,
             plain_message,
             settings.EMAIL_HOST_USER,
-
-            ['dvooskid12345@gmail.com', 'infoinsurance@thrivenig.com',
-                'infotravels@thrivenig.com']
+            [
+                "david.edet@thrivenig.com",
+                "oluwaremilekun.abebowale@thrivenig.com" "infoinsurance@thrivenig.com",
+                "infotravels@thrivenig.com",
+            ],
         )
         email.attach_alternative(html_content, "text/html")
 
@@ -54,17 +60,20 @@ class ContactMail(GenericAPIView, CreateModelMixin, ListModelMixin):
         contact = serializer.save()
 
         html_content = render_to_string(
-            'emails/contact_mail.html', {'contact': contact})
+            "emails/contact_mail.html", {"contact": contact}
+        )
         plain_message = strip_tags(html_content)
 
-        subject = f'New Contact from {contact.first_name}'
+        subject = f"New Contact from {contact.first_name}"
         email = EmailMultiAlternatives(
             subject,
             plain_message,
             settings.EMAIL_HOST_USER,
-
-            ['dvooskid12345@gmail.com', 'infoinsurance@thrivenig.com',
-                'infotravels@thrivenig.com']
+            [
+                "david.edet@thrivenig.com",
+                "oluwaremilekun.abebowale@thrivenig.com" "infoinsurance@thrivenig.com",
+                "infotravels@thrivenig.com",
+            ],
         )
         email.attach_alternative(html_content, "text/html")
 
@@ -83,20 +92,23 @@ class NewsletterSubscription(GenericAPIView, CreateModelMixin, ListModelMixin):
         return self.create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        email_address = serializer.validated_data['email']
+        email_address = serializer.validated_data["email"]
 
         html_content = render_to_string(
-            'emails/newsletter_subscription.html', {'email': email_address})
+            "emails/newsletter_subscription.html", {"email": email_address}
+        )
         plain_message = strip_tags(html_content)
 
-        subject = f'New Subscriber with email {email_address}'
+        subject = f"New Subscriber with email {email_address}"
         email = EmailMultiAlternatives(
             subject,
             plain_message,
             settings.EMAIL_HOST_USER,
-
-            ['dvooskid12345@gmail.com', 'infoinsurance@thrivenig.com',
-                'infotravels@thrivenig.com']
+            [
+                "david.edet@thrivenig.com",
+                "oluwaremilekun.abebowale@thrivenig.com" "infoinsurance@thrivenig.com",
+                "infotravels@thrivenig.com",
+            ],
         )
         email.attach_alternative(html_content, "text/html")
 
@@ -122,18 +134,19 @@ class SubmitCv(GenericAPIView, CreateModelMixin, ListModelMixin):
     def perform_create(self, serializer):
         cv_submission = serializer.save()
 
-        html_content = render_to_string(
-            'emails/submit_cv.html', {'cv': cv_submission})
+        html_content = render_to_string("emails/submit_cv.html", {"cv": cv_submission})
         plain_message = strip_tags(html_content)
 
-        subject = f'New CV Submitted by {cv_submission.email}'
+        subject = f"New CV Submitted by {cv_submission.email}"
         email = EmailMultiAlternatives(
             subject,
             plain_message,
             settings.EMAIL_HOST_USER,
-
-            ['dvooskid12345@gmail.com', 'infoinsurance@thrivenig.com',
-                'infotravels@thrivenig.com']
+            [
+                "david.edet@thrivenig.com",
+                "oluwaremilekun.abebowale@thrivenig.com" "infoinsurance@thrivenig.com",
+                "infotravels@thrivenig.com",
+            ],
         )
         email.attach_alternative(html_content, "text/html")
 
