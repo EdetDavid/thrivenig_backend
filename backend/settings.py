@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     "rest_framework.authtoken",
+    # django-ses provides a backend that delegates sending to AWS SES via boto3
+    "django_ses",
 ]
 
 MIDDLEWARE = [
@@ -79,32 +81,23 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 
 # Amadeus Api
-CLIENT_ID = "LNCgkGOS2gsex21xG1RnpllQGaHwodig"
-CLIENT_SECRET = "Z5KRodc373AzGjGw"
+CLIENT_ID = env('CLIENT_ID', )
+CLIENT_SECRET = env('CLIENT_SECRET' )
 
 
-# Email configuration — prefer environment values and Brevo (Sendinblue) SMTP by default.
-# Optional: set BREVO_API_KEY if you want to send via Brevo REST API instead of SMTP.
-EMAIL_SERVICE = env('EMAIL_SERVICE', default='sendinblue').lower()
-BREVO_API_KEY = env('BREVO_API_KEY', default='')  # xkeysib-... (optional, for REST)
+# Email configuration — Amazon SES only
+EMAIL_BACKEND = 'django_ses.SESBackend'
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='thriveholdingswebmail@gmail.com')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER or 'thriveholdingswebmail@gmail.com')
 
-if EMAIL_SERVICE == 'sendinblue' or EMAIL_SERVICE == 'brevo':
-    # Brevo / Sendinblue SMTP
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = env('EMAIL_HOST', default='smtp-relay.brevo.com')
-    EMAIL_PORT = env('EMAIL_PORT', default=587)
-    # For many Brevo accounts use 'apikey' as the SMTP user; otherwise set the provided SMTP user
-    EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='apikey')
-    EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')  # xsmtpsib-...
-    EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', True)
+# AWS credentials and SES-specific settings. Prefer environment variables (do NOT commit credentials).
+AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID',)
+AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
+# Example region: 'us-east-1'
+AWS_SES_REGION_NAME = env('AWS_SES_REGION_NAME', default='us-east-1')
+# Example endpoint: 'email.us-east-1.amazonaws.com'
+AWS_SES_REGION_ENDPOINT = env('AWS_SES_REGION_ENDPOINT', default=f'email.{AWS_SES_REGION_NAME}.amazonaws.com')
 
-elif EMAIL_SERVICE == 'ses':
-    # keep SES option if you still want it
-    EMAIL_BACKEND = 'django_ses.SESBackend'
-    EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
-else:
-    # fallback to console during development if misconfigured
-    EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
