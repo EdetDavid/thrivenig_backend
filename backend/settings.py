@@ -80,23 +80,31 @@ TEMPLATES = [
 WSGI_APPLICATION = "backend.wsgi.application"
 
 
-# Amadeus Api
-CLIENT_ID = env('CLIENT_ID', )
-CLIENT_SECRET = env('CLIENT_SECRET' )
+# Amadeus Api (Optional - leave empty if not using flight booking features)
+# Set these in your .env if you enable flight booking
+CLIENT_ID = env('AMADEUS_CLIENT_ID', default='')
+CLIENT_SECRET = env('AMADEUS_CLIENT_SECRET', default='')
 
 
-# Email configuration — Amazon SES only
-EMAIL_BACKEND = 'django_ses.SESBackend'
+# Email configuration — prefer SES when credentials are present, otherwise use console backend to avoid runtime errors
+# If you want to enable SES, set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in your .env
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='thriveholdingswebmail@gmail.com')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER or 'thriveholdingswebmail@gmail.com')
 
 # AWS credentials and SES-specific settings. Prefer environment variables (do NOT commit credentials).
-AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID',)
-AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
+AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID', default='')
+AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY', default='')
 # Example region: 'us-east-1'
 AWS_SES_REGION_NAME = env('AWS_SES_REGION_NAME', default='us-east-1')
 # Example endpoint: 'email.us-east-1.amazonaws.com'
 AWS_SES_REGION_ENDPOINT = env('AWS_SES_REGION_ENDPOINT', default=f'email.{AWS_SES_REGION_NAME}.amazonaws.com')
+
+# Select email backend: use django-ses only when AWS creds are provided; otherwise fall back to console backend
+if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
+    EMAIL_BACKEND = 'django_ses.SESBackend'
+else:
+    # Safe default for development: prints email to console and prevents SES API calls
+    EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
