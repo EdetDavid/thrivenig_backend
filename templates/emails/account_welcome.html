@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+    <div style="max-width: 600px; margin: auto; padding: 20px; background: #ffffff; border-radius: 12px; border: 1px solid #e5e5e5;">
+      <h1 style="color: #181344;">Welcome to Thrive Travels!</h1>
+      <p>Hi {{ user.first_name|default:user.username }},</p>
+      <p>Thanks for creating an account with Thrive Travels. You're all set to book flights and hotels with us.</p>
+      <p>
+        Your account details:
+        <br />Username: <strong>{{ user.username }}</strong>
+        <br />Email: <strong>{{ user.email }}</strong>
+      </p>
+      <p>We’re excited to help you plan your next trip.</p>
+      <p style="margin-top: 30px;">Best regards,<br />The Thrive Travels Team</p>
+    </div>
+  </body>
+</html>

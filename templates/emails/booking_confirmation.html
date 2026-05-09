@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+    <div style="max-width: 600px; margin: auto; padding: 20px; background: #ffffff; border-radius: 12px; border: 1px solid #e5e5e5;">
+      <h1 style="color: #181344;">{{ booking_type }} Booking Confirmed</h1>
+      <p>Hi {{ user.first_name|default:user.username }},</p>
+      <p>Thank you for booking with Thrive Travels. Your {{ booking_type|lower }} booking is confirmed.</p>
+      
+      <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #181344; margin-top: 0;">Booking Information</h3>
+        <p>
+          <strong>Booking ID:</strong> {{ booking_id }}<br />
+          <strong>Booking Date:</strong> {{ booking_date }}<br />
+          <strong>Confirmation Email:</strong> {{ user.email }}
+        </p>
+      </div>
+
+      {% if flight_details %}
+      <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #181344; margin-top: 0;">Flight Details</h3>
+        <pre style="margin: 0; font-size: 14px; white-space: pre-wrap; word-wrap: break-word;">{{ flight_details }}</pre>
+      </div>
+      {% endif %}
+
+      {% if hotel_details %}
+      <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #181344; margin-top: 0;">Hotel Details</h3>
+        <pre style="margin: 0; font-size: 14px; white-space: pre-wrap; word-wrap: break-word;">{{ hotel_details }}</pre>
+      </div>
+      {% endif %}
+
+      {% if user_details %}
+      <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #181344; margin-top: 0;">Passenger/Guest Information</h3>
+        <pre style="margin: 0; font-size: 14px; white-space: pre-wrap; word-wrap: break-word;">{{ user_details }}</pre>
+      </div>
+      {% endif %}
+
+      <p style="margin-top: 20px; border-top: 1px solid #e5e5e5; padding-top: 15px;">
+        If you have any questions or need to modify your booking, feel free to reply to this email.
+      </p>
+      
+      <p style="margin-top: 30px; color: #666;">Safe travels,<br /><strong>The Thrive Travels Team</strong></p>
+    </div>
+  </body>
+</html>
+
