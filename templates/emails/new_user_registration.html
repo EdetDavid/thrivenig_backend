@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+    <div style="max-width: 600px; margin: auto; padding: 20px; background: #ffffff; border-radius: 12px; border: 1px solid #e5e5e5;">
+      <h1 style="color: #181344;">New User Registration</h1>
+      <p>Hello Thrive Travels Team,</p>
+      <p>A new user has registered on the Thrive Travels platform.</p>
+
+      <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #181344; margin-top: 0;">User Information</h3>
+        <p style="margin: 0;">
+          Name: <strong>{{ user.get_full_name|default:user.username }}</strong>
+          <br />Username: <strong>{{ user.username }}</strong>
+          <br />Email: <strong>{{ user.email }}</strong>
+        </p>
+      </div>
+
+      <p style="margin-top: 30px; color: #666;">This is an automated registration notification from the Thrive Travels website.</p>
+    </div>
+  </body>
+</html>

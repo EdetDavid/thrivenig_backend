@@ -4,13 +4,24 @@
     <div style="max-width: 600px; margin: auto; padding: 20px; background: #ffffff; border-radius: 12px; border: 1px solid #e5e5e5;">
       <h1 style="color: #181344;">Welcome to Thrive Travels!</h1>
       <p>Hi {{ user.first_name|default:user.username }},</p>
-      <p>Thanks for creating an account with Thrive Travels. You're all set to book flights and hotels with us.</p>
-      <p>
-        Your account details:
-        <br />Username: <strong>{{ user.username }}</strong>
-        <br />Email: <strong>{{ user.email }}</strong>
-      </p>
-      <p>We’re excited to help you plan your next trip.</p>
+      <p>Thanks for creating an account with Thrive Travels. You can now request flight and hotel bookings from your account.</p>
+
+      <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #181344; margin-top: 0;">How to Use Your Account</h3>
+        <p style="margin: 0 0 10px;">1. Sign in with your registered email and password.</p>
+        <p style="margin: 0 0 10px;">2. Choose flights or hotels and submit your travel details.</p>
+        <p style="margin: 0;">3. Our travel team will receive your request and follow up with the next steps.</p>
+      </div>
+
+      <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #181344; margin-top: 0;">Your Account Details</h3>
+        <p style="margin: 0;">
+          Username: <strong>{{ user.username }}</strong>
+          <br />Email: <strong>{{ user.email }}</strong>
+        </p>
+      </div>
+
+      <p>We're excited to help you plan your next trip.</p>
       <p style="margin-top: 30px;">Best regards,<br />The Thrive Travels Team</p>
     </div>
   </body>

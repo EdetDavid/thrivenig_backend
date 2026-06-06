@@ -21,6 +21,35 @@ from .serializers import (
 )
 
 
+TRAVEL_AGENCY_EMAILS = ["david.edet@thrivenig.com", "oluwaremilekun.adebowale@thrivenig.com"]
+
+
+def titleize_key(value):
+    return str(value).replace("_", " ").replace("-", " ").title()
+
+
+def format_detail_rows(details, parent_key=""):
+    if details is None:
+        return []
+
+    if isinstance(details, dict):
+        rows = []
+        for key, value in details.items():
+            label = titleize_key(key)
+            full_label = f"{parent_key} - {label}" if parent_key else label
+            rows.extend(format_detail_rows(value, full_label))
+        return rows
+
+    if isinstance(details, list):
+        rows = []
+        for index, value in enumerate(details, start=1):
+            label = f"{parent_key} {index}".strip()
+            rows.extend(format_detail_rows(value, label))
+        return rows
+
+    return [{"label": parent_key or "Details", "value": details}]
+
+
 def send_email(subject, html_content, recipient_list):
     plain_message = strip_tags(html_content)
     email = EmailMultiAlternatives(
@@ -45,12 +74,7 @@ class ReportClaim(CreateAPIView):
         send_email(
             subject,
             html_content,
-            [
-                "david.edet@thrivenig.com",
-                "oluwaremilekun.abebowale@thrivenig.com",
-                "infoinsurance@thrivenig.com",
-                "infotravels@thrivenig.com",
-            ],
+         TRAVEL_AGENCY_EMAILS,
         )
         print("Claim Reported Successfully")
 
@@ -67,12 +91,7 @@ class ContactMail(CreateAPIView):
         send_email(
             subject,
             html_content,
-            [
-                "david.edet@thrivenig.com",
-                "oluwaremilekun.abebowale@thrivenig.com",
-                "infoinsurance@thrivenig.com",
-                "infotravels@thrivenig.com",
-            ],
+            TRAVEL_AGENCY_EMAILS,
         )
         print("Contact Mailed Successfully")
 
@@ -91,10 +110,7 @@ class NewsletterSubscription(CreateAPIView):
             send_email(
                 subject,
                 html_content,
-                [
-                    "david.edet@thrivenig.com",
-                    "davidedetnsikak@gmail.com",
-                ],
+                TRAVEL_AGENCY_EMAILS,
             )
             print("Subscribed successfully")
             serializer.save()
@@ -115,10 +131,7 @@ class SubmitCv(CreateAPIView):
         send_email(
             subject,
             html_content,
-            [
-                "david.edet@thrivenig.com",
-                "oluwaremilekun.adebowale@thrivenig.com",
-            ],
+            TRAVEL_AGENCY_EMAILS,
         )
         print("CV Submitted Successfully")
 
@@ -129,12 +142,21 @@ class RegisterUser(CreateAPIView):
 
     def perform_create(self, serializer):
         user = serializer.save()
-        html_content = render_to_string(
+        user_html_content = render_to_string(
             "emails/account_welcome.html",
             {"user": user},
         )
-        send_email("Welcome to Thrive Travels", html_content, [user.email,   "david.edet@thrivenig.com",
-                                                               "oluwaremilekun.adebowale@thrivenig.com", ])
+        agency_html_content = render_to_string(
+            "emails/new_user_registration.html",
+            {"user": user},
+        )
+        send_email("Welcome to Thrive Travels", user_html_content, [user.email])
+        send_email(
+            f"New Thrive Travels User Registered - {user.email}",
+            agency_html_content,
+            TRAVEL_AGENCY_EMAILS,
+        )
+
 
 
 class UserProfileAPIView(APIView):
@@ -167,16 +189,19 @@ class FlightBookingAPIView(CreateAPIView):
             {
                 "user": self.request.user,
                 "user_details": booking.user_details,
+                "user_detail_rows": format_detail_rows(booking.user_details),
                 "flight_details": booking.flight_details,
+                "flight_detail_rows": format_detail_rows(booking.flight_details),
                 "booking_id": booking.id,
                 "booking_date": booking.booking_date,
                 "booking_type": "Flight",
+                "is_agency_notification": True,
             },
         )
         send_email(
-            "Your Thrive Travels Flight Booking is Confirmed",
+            f"New Thrive Travels Flight Booking #{booking.id}",
             html_content,
-            [self.request.user.email],
+            TRAVEL_AGENCY_EMAILS,
         )
 
 
@@ -192,15 +217,18 @@ class HotelBookingAPIView(CreateAPIView):
             {
                 "user": self.request.user,
                 "user_details": booking.user_details,
+                "user_detail_rows": format_detail_rows(booking.user_details),
                 "hotel_details": booking.hotel_details,
+                "hotel_detail_rows": format_detail_rows(booking.hotel_details),
                 "booking_id": booking.id,
                 "booking_date": booking.booking_date,
                 "booking_type": "Hotel",
+                "is_agency_notification": True,
             },
         )
 
         send_email(
-            "Your Thrive Travels Hotel Booking is Confirmed",
+            f"New Thrive Travels Hotel Booking #{booking.id}",
             html_content,
-            [self.request.user.email],
+            TRAVEL_AGENCY_EMAILS,
         )
