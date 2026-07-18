@@ -79,5 +79,5 @@ class HotelBooking(models.Model):
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        UserProfile.objects.create(user=instance)
+    if created and not kwargs.get("raw", False):
+        UserProfile.objects.get_or_create(user=instance)

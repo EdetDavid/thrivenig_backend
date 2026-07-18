@@ -1,27 +1,10 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "backend/wsgi.py",
-      "use": "@vercel/python",
-      "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
-    },
-    {
-      "src": "build_files.sh",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "staticfiles_build"
-      }
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "django",
+  "buildCommand": "python manage.py collectstatic --noinput",
+  "functions": {
+    "backend/wsgi.py": {
+      "excludeFiles": "{venv/**,db.sqlite3,media/**,**/__pycache__/**,**/*.pyc}"
     }
-  ],
-  "routes": [
-    {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "backend/wsgi.py"
-    }
-  ]
+  }
 }
