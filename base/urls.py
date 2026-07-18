@@ -8,9 +8,11 @@ from .views import (
     UserProfileAPIView,
     FlightBookingAPIView,
     HotelBookingAPIView,
+    ChatbotAPIView,
 )
 
 urlpatterns = [
+    path('chatbot/', ChatbotAPIView.as_view(), name='chatbot'),
     path("report-claim/", ReportClaim.as_view(), name="report-claim"),
     path('contact/', ContactMail.as_view(), name='contact'),
     path('newsletter/', NewsletterSubscription.as_view(), name='newsletter-subscribe'),

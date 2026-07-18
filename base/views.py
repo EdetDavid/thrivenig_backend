@@ -3,11 +3,15 @@ from django.utils.html import strip_tags
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.auth.models import User
 from django.conf import settings
+import json
+import logging
+from urllib import error, request as url_request
 from rest_framework.generics import CreateAPIView
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.throttling import ScopedRateThrottle
 from .models import Contact, Claim, NewsletterSubscription, SubmitCv, FlightBooking, HotelBooking, UserProfile
 from .serializers import (
     ClaimSerializer,
@@ -22,6 +26,115 @@ from .serializers import (
 
 
 TRAVEL_AGENCY_EMAILS = ["david.edet@thrivenig.com", "oluwaremilekun.adebowale@thrivenig.com"]
+logger = logging.getLogger(__name__)
+
+THRIVE_CHATBOT_INSTRUCTIONS = """
+You are the warm, concise virtual guide for Thrive Holdings Limited, a Nigerian
+holding company. Be conversational, ask only one useful follow-up question at a
+time, and use the guest's first name if they provide it.
+
+Website facts:
+- Thrive Holdings provides strategic direction, governance, and shared support.
+- Its operating companies are Thrive Insurance Brokers Limited and Thrive
+  Travels & Tours Limited.
+- Insurance supports risk advice, policy placement, renewals, and claims for
+  individuals and organisations. Cover includes life, property, motor,
+  liability, engineering, pecuniary, travel, marine, oil & gas, and specialty.
+- Travel supports flights, hotels, visa assistance, tours, holidays, itineraries,
+  and corporate travel management.
+- Phone numbers: 08180996418 and 07087943708.
+- Emails: infoinsurance@thrivenig.com and infotravels@thrivenig.com.
+
+Rules:
+- Never invent prices, quotes, availability, policy terms, claim outcomes, visa
+  requirements, or booking confirmations.
+- Do not request passport numbers, payment-card information, passwords, medical
+  records, or other highly sensitive information in chat.
+- For travel planning, naturally collect destination, approximate dates, number
+  of travellers, and needed services. Then recommend the live WhatsApp or Tawk.to
+  handoff available in the chat interface.
+- For insurance claims or detailed advice, acknowledge the situation and refer
+  the guest to a human agent.
+- If the question is unrelated to Thrive, briefly explain what you can help with.
+- Keep most answers under 100 words and do not use markdown tables.
+""".strip()
+
+
+def extract_response_text(payload):
+    if isinstance(payload.get("output_text"), str):
+        return payload["output_text"].strip()
+    for item in payload.get("output", []):
+        for content in item.get("content", []):
+            if content.get("type") == "output_text" and content.get("text"):
+                return content["text"].strip()
+    return ""
+
+
+class ChatbotAPIView(APIView):
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "chatbot"
+
+    def post(self, request):
+        api_key = settings.OPENAI_API_KEY
+        if not api_key:
+            return Response(
+                {"detail": "AI chat is not configured."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        raw_messages = request.data.get("messages", [])
+        if not isinstance(raw_messages, list) or not raw_messages:
+            return Response(
+                {"detail": "A non-empty messages list is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        messages = []
+        for item in raw_messages[-12:]:
+            if not isinstance(item, dict) or item.get("role") not in {"user", "assistant"}:
+                continue
+            content = str(item.get("content", "")).strip()[:1500]
+            if content:
+                messages.append({"role": item["role"], "content": content})
+
+        if not messages or messages[-1]["role"] != "user":
+            return Response(
+                {"detail": "The latest valid message must be from the user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        body = json.dumps({
+            "model": settings.OPENAI_CHAT_MODEL,
+            "instructions": THRIVE_CHATBOT_INSTRUCTIONS,
+            "input": messages,
+            "max_output_tokens": 250,
+            "reasoning": {"effort": "low"},
+            "text": {"verbosity": "low"},
+        }).encode("utf-8")
+        api_request = url_request.Request(
+            "https://api.openai.com/v1/responses",
+            data=body,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+
+        try:
+            with url_request.urlopen(api_request, timeout=25) as api_response:
+                payload = json.loads(api_response.read().decode("utf-8"))
+            answer = extract_response_text(payload)
+            if not answer:
+                raise ValueError("OpenAI returned no response text")
+            return Response({"reply": answer})
+        except (error.URLError, error.HTTPError, TimeoutError, ValueError, json.JSONDecodeError):
+            logger.exception("OpenAI chatbot request failed")
+            return Response(
+                {"detail": "The AI assistant is temporarily unavailable."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
 
 
 def titleize_key(value):

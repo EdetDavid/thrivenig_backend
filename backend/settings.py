@@ -83,6 +83,10 @@ WSGI_APPLICATION = "backend.wsgi.application"
 CLIENT_ID = env('AMADEUS_CLIENT_ID', default='')
 CLIENT_SECRET = env('AMADEUS_CLIENT_SECRET', default='')
 
+# OpenAI chatbot credentials must be configured as server environment variables.
+OPENAI_API_KEY = env('OPENAI_API_KEY', default='')
+OPENAI_CHAT_MODEL = env('OPENAI_CHAT_MODEL', default='gpt-5.6-terra')
+
 
 # Email configuration — prefer SES when credentials are present, otherwise use console backend to avoid runtime errors
 # If you want to enable SES, set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in your .env
@@ -170,6 +174,9 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
+    "DEFAULT_THROTTLE_RATES": {
+        "chatbot": "20/minute",
+    },
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
