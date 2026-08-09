@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>New flight fare request</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.5;">
+    <h1 style="color: #123a63;">New flight fare request</h1>
+    <p>
+      Reference <strong>{{ booking_reference }}</strong> was received on
+      {{ booking_date }}. This is a fare request, not a confirmed airline
+      booking. Availability and the final price must be checked before payment.
+    </p>
+
+    <h2>Traveler contact</h2>
+    <table cellpadding="6" cellspacing="0" border="1" style="border-collapse: collapse;">
+      <tr><th align="left">Name</th><td>{{ customer_name|default:"Not supplied" }}</td></tr>
+      <tr><th align="left">Email</th><td>{{ customer_email|default:"Not supplied" }}</td></tr>
+      <tr><th align="left">Phone</th><td>{{ customer_phone|default:"Not supplied" }}</td></tr>
+      {% if account %}
+        <tr><th align="left">Account</th><td>{{ account.username }}</td></tr>
+      {% endif %}
+    </table>
+
+    <h2>Search details</h2>
+    <table cellpadding="6" cellspacing="0" border="1" style="border-collapse: collapse;">
+      {% for row in flight_detail_rows %}
+        <tr><th align="left">{{ row.label }}</th><td>{{ row.value }}</td></tr>
+      {% empty %}
+        <tr><td>No search details supplied.</td></tr>
+      {% endfor %}
+    </table>
+
+    {% if offer_detail_rows %}
+      <h2>Selected offer snapshot</h2>
+      <p>This browser-supplied snapshot is unverified and must be repriced.</p>
+      <table cellpadding="6" cellspacing="0" border="1" style="border-collapse: collapse;">
+        {% for row in offer_detail_rows %}
+          <tr><th align="left">{{ row.label }}</th><td>{{ row.value }}</td></tr>
+        {% endfor %}
+      </table>
+    {% endif %}
+  </body>
+</html>

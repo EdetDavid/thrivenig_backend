@@ -80,10 +80,87 @@ TEMPLATES = [
 WSGI_APPLICATION = "backend.wsgi.application"
 
 
-# Amadeus Api (Optional - leave empty if not using flight booking features)
-# Set these in your .env if you enable flight booking
-CLIENT_ID = env('AMADEUS_CLIENT_ID', default='')
-CLIENT_SECRET = env('AMADEUS_CLIENT_SECRET', default='')
+# Server-side flight search. Never expose supplier tokens to the React app.
+FLIGHT_SEARCH_PROVIDER = env('FLIGHT_SEARCH_PROVIDER', default='')
+DUFFEL_ACCESS_TOKEN = env('DUFFEL_ACCESS_TOKEN', default='')
+DUFFEL_API_BASE_URL = env(
+    'DUFFEL_API_BASE_URL',
+    default='https://api.duffel.com',
+)
+DUFFEL_API_VERSION = env('DUFFEL_API_VERSION', default='v2')
+DUFFEL_SUPPLIER_TIMEOUT_MS = env.int(
+    'DUFFEL_SUPPLIER_TIMEOUT_MS',
+    default=15000,
+)
+FLIGHT_SEARCH_TIMEOUT_SECONDS = env.int(
+    'FLIGHT_SEARCH_TIMEOUT_SECONDS',
+    default=25,
+)
+FLIGHT_SEARCH_RELAX_TLS_STRICT = env.bool(
+    'FLIGHT_SEARCH_RELAX_TLS_STRICT',
+    default=False,
+)
+FLIGHT_SEARCH_CACHE_SECONDS = env.int(
+    'FLIGHT_SEARCH_CACHE_SECONDS',
+    default=120,
+)
+FLIGHT_SEARCH_RESULT_LIMIT = min(
+    max(env.int('FLIGHT_SEARCH_RESULT_LIMIT', default=50), 1),
+    200,
+)
+FLIGHT_LOCATION_CACHE_SECONDS = env.int(
+    'FLIGHT_LOCATION_CACHE_SECONDS',
+    default=3600,
+)
+ALLOW_DUFFEL_TEST_DATA = env.bool(
+    'ALLOW_DUFFEL_TEST_DATA',
+    default=DEBUG,
+)
+
+# Hotel search can use inventory curated by Thrive staff or Duffel Stays.
+# Supplier tokens remain server-side and must never be sent to the React app.
+HOTEL_SEARCH_PROVIDER = env('HOTEL_SEARCH_PROVIDER', default='local')
+ALLOW_HOTEL_TEST_DATA = env.bool(
+    'ALLOW_HOTEL_TEST_DATA',
+    default=DEBUG,
+)
+HOTEL_SEARCH_TIMEOUT_SECONDS = env.int(
+    'HOTEL_SEARCH_TIMEOUT_SECONDS',
+    default=30,
+)
+HOTEL_SEARCH_RELAX_TLS_STRICT = env.bool(
+    'HOTEL_SEARCH_RELAX_TLS_STRICT',
+    default=False,
+)
+HOTEL_SEARCH_CACHE_SECONDS = env.int(
+    'HOTEL_SEARCH_CACHE_SECONDS',
+    default=300,
+)
+HOTEL_SEARCH_RESULT_LIMIT = min(
+    max(env.int('HOTEL_SEARCH_RESULT_LIMIT', default=50), 1),
+    200,
+)
+HOTEL_LOCATION_CACHE_SECONDS = env.int(
+    'HOTEL_LOCATION_CACHE_SECONDS',
+    default=3600,
+)
+HOTEL_SEARCH_DEFAULT_RADIUS_KM = min(
+    max(env.int('HOTEL_SEARCH_DEFAULT_RADIUS_KM', default=10), 1),
+    100,
+)
+HOTEL_FX_API_BASE_URL = env(
+    'HOTEL_FX_API_BASE_URL',
+    default='https://api.frankfurter.dev/v2',
+)
+HOTEL_FX_TIMEOUT_SECONDS = env.int(
+    'HOTEL_FX_TIMEOUT_SECONDS',
+    default=5,
+)
+HOTEL_FX_CACHE_SECONDS = env.int(
+    'HOTEL_FX_CACHE_SECONDS',
+    default=86400,
+)
+DRF_NUM_PROXIES = env.int('DRF_NUM_PROXIES', default=0)
 
 # OpenAI chatbot credentials must be configured as server environment variables.
 OPENAI_API_KEY = env('OPENAI_API_KEY', default='')
@@ -94,6 +171,14 @@ OPENAI_CHAT_MODEL = env('OPENAI_CHAT_MODEL', default='gpt-5.6-terra')
 # If you want to enable SES, set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in your .env
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='thriveholdingswebmail@gmail.com')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER or 'thriveholdingswebmail@gmail.com')
+TRAVEL_AGENCY_EMAILS = env.list(
+    'TRAVEL_AGENCY_EMAILS',
+    default=[
+        'david.edet@thrivenig.com',
+        'oluwaremilekun.adebowale@thrivenig.com',
+        'kazeem.busari@thrivenig.com',
+    ],
+)
 
 # AWS credentials and SES-specific settings. Prefer environment variables (do NOT commit credentials).
 AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID', default='')
@@ -194,7 +279,14 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_THROTTLE_RATES": {
         "chatbot": "20/minute",
+        "flight_booking": "5/minute",
+        "flight_locations": "30/minute",
+        "flight_search": "10/minute",
+        "hotel_booking": "5/minute",
+        "hotel_locations": "30/minute",
+        "hotel_search": "10/minute",
     },
+    "NUM_PROXIES": DRF_NUM_PROXIES,
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

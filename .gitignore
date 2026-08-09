@@ -11,3 +11,4 @@ staticfiles/
 
 .vercel
 .env*
+!.env.example
