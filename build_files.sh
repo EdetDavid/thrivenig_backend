@@ -1,11 +1,12 @@
-# build_files.sh
-echo "Building the project..."
-python3.9 -m pip install -r requirements.txt
+#!/usr/bin/env sh
+set -eu
 
-echo "Make Migrations..."
-python3.9 manage.py makemigrations --no-input
-python3.9 manage.py migrate --no-input
+echo "Checking for model changes without committed migrations..."
+python manage.py makemigrations --check --dry-run --noinput
 
-echo "Collect Static Files..."
-python3.9 manage.py collectstatic --no-input --clear
+echo "Applying database migrations..."
+python manage.py migrate --noinput
+
+echo "Collecting static files..."
+python manage.py collectstatic --noinput
 

@@ -3,6 +3,7 @@ from datetime import timedelta
 from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs, urlparse
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.cache import cache
@@ -19,13 +20,14 @@ from .services.flight_search import (
     search_flight_locations,
     search_flights,
 )
-from .views import TRAVEL_AGENCY_EMAILS, format_detail_rows, send_email
+from .views import format_detail_rows, send_email
 
 
 class FlightBookingEmailTests(TestCase):
     def setUp(self):
         cache.clear()
 
+    @override_settings(ADMIN_EMAILS=["registrations@example.com"])
     @patch("base.views.send_email")
     def test_registration_sends_user_welcome_and_agency_notification(self, send_email):
         client = APIClient()
@@ -53,9 +55,31 @@ class FlightBookingEmailTests(TestCase):
         self.assertIn("How to Use Your Account", user_html_content)
 
         self.assertIn("New Thrive Travels User Registered", agency_subject)
-        self.assertEqual(agency_recipients, TRAVEL_AGENCY_EMAILS)
+        self.assertEqual(agency_recipients, settings.ADMIN_EMAILS)
         self.assertIn("New User Registration", agency_html_content)
         self.assertIn("newuser@example.com", agency_html_content)
+
+    @override_settings(INSURANCE_AGENCY_EMAILS=["claims@example.com"])
+    @patch("base.views.send_email")
+    def test_claim_email_goes_to_configured_insurance_recipients(self, send_email):
+        client = APIClient()
+
+        response = client.post(
+            "/api/report-claim/",
+            {
+                "insured": "Ada Okafor",
+                "policy_number": "POL-123",
+                "email": "ada@example.com",
+                "phone": "+2348012345678",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        send_email.assert_called_once()
+        subject, _, recipients = send_email.call_args.args
+        self.assertIn("New Claim Reported", subject)
+        self.assertEqual(recipients, settings.INSURANCE_AGENCY_EMAILS)
 
     def test_format_detail_rows_flattens_flight_details(self):
         details = {
@@ -95,6 +119,7 @@ class FlightBookingEmailTests(TestCase):
             "<p>Fare request details</p>",
         )
 
+    @override_settings(TRAVEL_AGENCY_EMAILS=["flights@example.com"])
     @patch("base.views.send_email")
     def test_flight_booking_email_goes_to_travel_agency(self, send_email):
         user = User.objects.create_user(
@@ -125,10 +150,11 @@ class FlightBookingEmailTests(TestCase):
         send_email.assert_called_once()
         subject, html_content, recipients = send_email.call_args.args
         self.assertIn("New Thrive Travels Flight Request", subject)
-        self.assertEqual(recipients, TRAVEL_AGENCY_EMAILS)
+        self.assertEqual(recipients, settings.TRAVEL_AGENCY_EMAILS)
         self.assertIn("Air Peace", html_content)
         self.assertIn("Flight Number", html_content)
 
+    @override_settings(TRAVEL_AGENCY_EMAILS=["hotels@example.com"])
     @patch("base.views.send_email")
     def test_hotel_booking_email_goes_to_travel_agency(self, send_email):
         user = User.objects.create_user(
@@ -158,7 +184,7 @@ class FlightBookingEmailTests(TestCase):
         send_email.assert_called_once()
         subject, html_content, recipients = send_email.call_args.args
         self.assertIn("New Thrive Travels Hotel Booking", subject)
-        self.assertEqual(recipients, TRAVEL_AGENCY_EMAILS)
+        self.assertEqual(recipients, settings.TRAVEL_AGENCY_EMAILS)
         self.assertIn("Thrive Suites", html_content)
         self.assertIn("Hotel Name", html_content)
 
@@ -316,7 +342,7 @@ class GuestFlightBookingTests(TestCase):
         send_email.assert_called_once()
         subject, html_content, recipients = send_email.call_args.args
         self.assertIn("Flight Request", subject)
-        self.assertEqual(recipients, TRAVEL_AGENCY_EMAILS)
+        self.assertEqual(recipients, settings.TRAVEL_AGENCY_EMAILS)
         self.assertIn("Ada Okafor", html_content)
         self.assertIn("ada@example.com", html_content)
         self.assertIn("+234 801 234 5678", html_content)

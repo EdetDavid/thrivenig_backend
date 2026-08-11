@@ -78,9 +78,6 @@ from .services.hotel_search import (
 from .services.search_logging import record_travel_search
 from .services.travel_pricing import TravelPricingError
 
-ADMIN_EMAILS = ["david.edet@thrivenig.com", "oluwaremilekun.adebowale@thrivenig.com"]
-TRAVEL_AGENCY_EMAILS = ["david.edet@thrivenig.com", "oluwaremilekun.adebowale@thrivenig.com", "kazeem.busari@thrivenig.com"]
-INSURANCE_AGENCY_EMAILS = ["david.edet@thrivenig.com", "Anifat.dare@thrivenig.com", "tokunbo.adeleke@thrivenig.com"]
 logger = logging.getLogger(__name__)
 
 THRIVE_CHATBOT_INSTRUCTIONS = """
@@ -243,7 +240,7 @@ class ReportClaim(CreateAPIView):
         send_email(
             subject,
             html_content,
-         INSURANCE_AGENCY_EMAILS,
+            settings.INSURANCE_AGENCY_EMAILS,
         )
         print("Claim Reported Successfully")
 
@@ -260,7 +257,7 @@ class ContactMail(CreateAPIView):
         send_email(
             subject,
             html_content,
-            ADMIN_EMAILS,
+            settings.ADMIN_EMAILS,
         )
         print("Contact Mailed Successfully")
 
@@ -279,7 +276,7 @@ class NewsletterSubscription(CreateAPIView):
             send_email(
                 subject,
                 html_content,
-                ADMIN_EMAILS,
+                settings.ADMIN_EMAILS,
             )
             print("Subscribed successfully")
             serializer.save()
@@ -300,7 +297,7 @@ class SubmitCv(CreateAPIView):
         send_email(
             subject,
             html_content,
-            ADMIN_EMAILS,
+            settings.ADMIN_EMAILS,
         )
         print("CV Submitted Successfully")
 
@@ -323,7 +320,7 @@ class RegisterUser(CreateAPIView):
         send_email(
             f"New Thrive Travels User Registered - {user.email}",
             agency_html_content,
-            ADMIN_EMAILS,
+            settings.ADMIN_EMAILS,
         )
 
 
@@ -666,7 +663,7 @@ class FlightBookingAPIView(CreateAPIView):
             send_email(
                 f"New Thrive Travels Flight Request TTF-{booking.id:06d}",
                 html_content,
-                TRAVEL_AGENCY_EMAILS,
+                settings.TRAVEL_AGENCY_EMAILS,
                 reply_to=[customer_email] if customer_email else None,
             )
         except Exception:
@@ -717,7 +714,7 @@ class HotelBookingAPIView(CreateAPIView):
             send_email(
                 f"New Thrive Travels Hotel Booking #{booking.id}",
                 html_content,
-                TRAVEL_AGENCY_EMAILS,
+                settings.TRAVEL_AGENCY_EMAILS,
             )
         except Exception:
             logger.exception(

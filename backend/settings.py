@@ -171,14 +171,10 @@ OPENAI_CHAT_MODEL = env('OPENAI_CHAT_MODEL', default='gpt-5.6-terra')
 # If you want to enable SES, set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in your .env
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='thriveholdingswebmail@gmail.com')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER or 'thriveholdingswebmail@gmail.com')
-TRAVEL_AGENCY_EMAILS = env.list(
-    'TRAVEL_AGENCY_EMAILS',
-    default=[
-        'david.edet@thrivenig.com',
-        'oluwaremilekun.adebowale@thrivenig.com',
-        'kazeem.busari@thrivenig.com',
-    ],
-)
+# Recipient groups are configured as comma-separated environment variables.
+ADMIN_EMAILS = env.list('ADMIN_EMAILS', default=[])
+TRAVEL_AGENCY_EMAILS = env.list('TRAVEL_AGENCY_EMAILS', default=[])
+INSURANCE_AGENCY_EMAILS = env.list('INSURANCE_AGENCY_EMAILS', default=[])
 
 # AWS credentials and SES-specific settings. Prefer environment variables (do NOT commit credentials).
 AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID', default='')

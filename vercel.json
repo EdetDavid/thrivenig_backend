@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "django",
-  "buildCommand": "python manage.py collectstatic --noinput",
+  "buildCommand": "sh build_files.sh",
   "functions": {
     "backend/wsgi.py": {
       "excludeFiles": "{venv/**,db.sqlite3,media/**,**/__pycache__/**,**/*.pyc}"
