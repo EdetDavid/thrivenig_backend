@@ -1,14 +1,16 @@
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework.authtoken.views import obtain_auth_token
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf import settings
+from base.views import LoginAPIView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("api/blog/", include('blog.urls')),
+    path("api/travel-admin/blog/", include('blog.admin_urls')),
     path("api/", include('base.urls')),
-    path("api/auth/", obtain_auth_token),
+    path("api/auth/", LoginAPIView.as_view()),
 ]
 
 

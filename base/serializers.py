@@ -26,6 +26,15 @@ from .services.hotel_search import (
     resolve_hotel_listing,
     resolve_hotel_search_result,
 )
+from .roles import (
+    ROLE_ADMIN,
+    ROLE_CHOICES,
+    ROLE_TRAVELER,
+    assign_user_role,
+    can_manage_content,
+    is_content_manager,
+    user_role,
+)
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
@@ -106,6 +115,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(source='profile.phone', allow_blank=True, required=False)
     address = serializers.CharField(source='profile.address', allow_blank=True, required=False)
     can_manage_admins = serializers.SerializerMethodField()
+    role = serializers.SerializerMethodField()
+    is_content_manager = serializers.SerializerMethodField()
+    can_manage_content = serializers.SerializerMethodField()
+    capabilities = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -119,11 +132,40 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "address",
             "is_staff",
             "can_manage_admins",
+            "role",
+            "is_content_manager",
+            "can_manage_content",
+            "capabilities",
         ]
-        read_only_fields = ["id", "username", "is_staff", "can_manage_admins"]
+        read_only_fields = [
+            "id",
+            "username",
+            "is_staff",
+            "can_manage_admins",
+            "role",
+            "is_content_manager",
+            "can_manage_content",
+            "capabilities",
+        ]
 
     def get_can_manage_admins(self, obj):
         return bool(obj.is_active and obj.is_staff and obj.is_superuser)
+
+    def get_role(self, obj):
+        return user_role(obj)
+
+    def get_is_content_manager(self, obj):
+        return is_content_manager(obj)
+
+    def get_can_manage_content(self, obj):
+        return can_manage_content(obj)
+
+    def get_capabilities(self, obj):
+        return {
+            'manage_content': can_manage_content(obj),
+            'manage_travel_admin': bool(obj.is_active and obj.is_staff),
+            'manage_admins': self.get_can_manage_admins(obj),
+        }
 
     def update(self, instance, validated_data):
         profile_data = validated_data.pop('profile', {})
@@ -1056,6 +1098,10 @@ class TravelAdminUserSerializer(serializers.ModelSerializer):
     hotel_request_count = serializers.IntegerField(read_only=True)
     search_count = serializers.IntegerField(read_only=True)
     can_manage_admins = serializers.SerializerMethodField()
+    role = serializers.SerializerMethodField()
+    is_content_manager = serializers.SerializerMethodField()
+    can_manage_content = serializers.SerializerMethodField()
+    capabilities = serializers.SerializerMethodField()
     # This is deliberately separate from ``can_manage_admins``: an inactive
     # superuser cannot manage roles, but their protected role must still be
     # visible to clients rendering role-management controls.
@@ -1074,6 +1120,10 @@ class TravelAdminUserSerializer(serializers.ModelSerializer):
             'address',
             'is_active',
             'is_staff',
+            'role',
+            'is_content_manager',
+            'can_manage_content',
+            'capabilities',
             'can_manage_admins',
             'admin_access_protected',
             'date_joined',
@@ -1095,23 +1145,46 @@ class TravelAdminUserSerializer(serializers.ModelSerializer):
     def get_can_manage_admins(self, obj):
         return bool(obj.is_active and obj.is_staff and obj.is_superuser)
 
+    def get_role(self, obj):
+        return user_role(obj)
+
+    def get_is_content_manager(self, obj):
+        return is_content_manager(obj)
+
+    def get_can_manage_content(self, obj):
+        return can_manage_content(obj)
+
+    def get_capabilities(self, obj):
+        return {
+            'manage_content': can_manage_content(obj),
+            'manage_travel_admin': bool(obj.is_active and obj.is_staff),
+            'manage_admins': self.get_can_manage_admins(obj),
+        }
+
     def get_admin_access_protected(self, obj):
         return bool(obj.is_superuser)
 
 
 class TravelAdminUserRoleSerializer(TravelAdminUserSerializer):
-    """Allow a site owner to grant or revoke travel-admin access only."""
+    """Allow a site owner to assign one canonical account role only."""
+
+    role = serializers.ChoiceField(choices=ROLE_CHOICES, required=False)
 
     class Meta(TravelAdminUserSerializer.Meta):
         read_only_fields = [
             field
             for field in TravelAdminUserSerializer.Meta.fields
-            if field != 'is_staff'
+            if field not in {'is_staff', 'role'}
         ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['role'] = user_role(instance)
+        return data
 
     def to_internal_value(self, data):
         if isinstance(data, Mapping):
-            unexpected_fields = set(data) - {'is_staff'}
+            unexpected_fields = set(data) - {'is_staff', 'role'}
             if unexpected_fields:
                 raise serializers.ValidationError(
                     {
@@ -1127,83 +1200,106 @@ class TravelAdminUserRoleSerializer(TravelAdminUserSerializer):
                         )
                     }
                 )
+            if 'is_staff' in data and 'role' in data:
+                raise serializers.ValidationError(
+                    {
+                        'role': (
+                            'Choose either role or the legacy is_staff field, '
+                            'not both.'
+                        )
+                    }
+                )
         return super().to_internal_value(data)
 
     def validate(self, attrs):
         # PATCH normally permits an empty payload, but this endpoint represents
         # one explicit role change and therefore requires the intended value.
-        if 'is_staff' not in attrs:
+        if 'is_staff' not in attrs and 'role' not in attrs:
             raise serializers.ValidationError(
                 {'is_staff': 'This field is required.'}
             )
 
-        desired_status = attrs['is_staff']
-        if self.instance and desired_status and not self.instance.is_active:
+        desired_role = attrs.get('role')
+        source_field = 'role' if desired_role is not None else 'is_staff'
+        if desired_role is None:
+            desired_role = ROLE_ADMIN if attrs['is_staff'] else ROLE_TRAVELER
+
+        if (
+            self.instance
+            and desired_role != ROLE_TRAVELER
+            and not self.instance.is_active
+        ):
             raise serializers.ValidationError(
                 {
-                    'is_staff': (
-                        'An inactive user cannot be promoted. Activate the '
+                    source_field: (
+                        'An inactive user cannot receive dashboard access. '
+                        'Activate the '
                         'account first.'
                     )
                 }
             )
-        if self.instance and not desired_status:
+        if self.instance and desired_role != user_role(self.instance):
             request = self.context.get('request')
             if request and request.user.pk == self.instance.pk:
                 raise serializers.ValidationError(
-                    {'is_staff': 'You cannot remove your own admin access.'}
+                    {source_field: 'You cannot change your own dashboard role.'}
                 )
             if self.instance.is_superuser:
                 raise serializers.ValidationError(
-                    {'is_staff': 'Superuser admin access cannot be removed here.'}
+                    {source_field: 'Superuser access cannot be changed here.'}
                 )
         return attrs
 
     def update(self, instance, validated_data):
-        desired_status = validated_data['is_staff']
-        if desired_status:
-            changed = User.objects.filter(
-                pk=instance.pk,
-                is_active=True,
-                is_staff=False,
-            ).update(is_staff=True)
-        else:
-            request = self.context.get('request')
-            if request and request.user.pk == instance.pk:
-                raise serializers.ValidationError(
-                    {'is_staff': 'You cannot remove your own admin access.'}
-                )
-            changed = User.objects.filter(
-                pk=instance.pk,
-                is_staff=True,
-                is_superuser=False,
-            ).update(is_staff=False)
+        requested_role = validated_data.pop('role', None)
+        source_field = 'role' if requested_role is not None else 'is_staff'
+        desired_role = requested_role
+        if desired_role is None:
+            desired_role = (
+                ROLE_ADMIN
+                if validated_data['is_staff']
+                else ROLE_TRAVELER
+            )
 
-        current_status = User.objects.only(
+        current_status = User.objects.select_for_update().only(
             'is_active',
             'is_staff',
             'is_superuser',
         ).get(pk=instance.pk)
-        if desired_status and not current_status.is_active:
+        current_role = user_role(current_status)
+        if desired_role != ROLE_TRAVELER and not current_status.is_active:
             raise serializers.ValidationError(
                 {
-                    'is_staff': (
-                        'An inactive user cannot be promoted. Activate the '
+                    source_field: (
+                        'An inactive user cannot receive dashboard access. '
+                        'Activate the '
                         'account first.'
                     )
                 }
             )
-        if not desired_status and current_status.is_superuser:
+        request = self.context.get('request')
+        if (
+            request
+            and request.user.pk == current_status.pk
+            and desired_role != current_role
+        ):
             raise serializers.ValidationError(
-                {'is_staff': 'Superuser admin access cannot be removed here.'}
+                {source_field: 'You cannot change your own dashboard role.'}
+            )
+        if current_status.is_superuser and desired_role != current_role:
+            raise serializers.ValidationError(
+                {source_field: 'Superuser access cannot be changed here.'}
             )
 
+        assign_user_role(current_status, desired_role)
+
         instance.is_active = current_status.is_active
-        instance.is_staff = current_status.is_staff
+        instance.is_staff = desired_role == ROLE_ADMIN
         instance.is_superuser = current_status.is_superuser
-        instance._admin_access_change = (
-            ('granted' if desired_status else 'revoked')
-            if changed == 1
+        getattr(instance, '_prefetched_objects_cache', {}).pop('groups', None)
+        instance._role_change = (
+            (current_role, desired_role)
+            if current_role != desired_role
             else None
         )
         return instance

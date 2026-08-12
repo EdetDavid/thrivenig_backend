@@ -28,6 +28,12 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool('DEBUG', default=False)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=env.list('HOSTS', default=["localhost", "127.0.0.1", ".vercel.app"]))
+if DEBUG:
+    ALLOWED_HOSTS = list(dict.fromkeys([
+        *ALLOWED_HOSTS,
+        'localhost',
+        '127.0.0.1',
+    ]))
 
 
 # Application definition
@@ -39,6 +45,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "blog.apps.BlogConfig",
     "base.apps.BaseConfig",
     'corsheaders',
     'rest_framework',
@@ -232,6 +239,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # For development purposes, you can use:
 CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=DEBUG)
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
+if DEBUG:
+    CORS_ALLOWED_ORIGINS = list(dict.fromkeys([
+        *CORS_ALLOWED_ORIGINS,
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+    ]))
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=["https://*.vercel.app"])
 
 
@@ -252,6 +265,8 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",

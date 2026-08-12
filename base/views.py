@@ -18,6 +18,8 @@ from rest_framework.generics import (
     RetrieveUpdateAPIView,
 )
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
@@ -321,6 +323,27 @@ class RegisterUser(CreateAPIView):
             f"New Thrive Travels User Registered - {user.email}",
             agency_html_content,
             settings.ADMIN_EMAILS,
+        )
+
+
+class LoginAPIView(ObtainAuthToken):
+    """Return the token and canonical dashboard role in one response."""
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(
+            data=request.data,
+            context={'request': request},
+        )
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, _ = Token.objects.get_or_create(user=user)
+        UserProfile.objects.get_or_create(user=user)
+
+        return Response(
+            {
+                'token': token.key,
+                'user': UserProfileSerializer(user).data,
+            }
         )
 
 
@@ -848,7 +871,9 @@ class TravelAdminUserListAPIView(ListAPIView):
     pagination_class = TravelAdminPagination
 
     def get_queryset(self):
-        queryset = User.objects.select_related('profile').annotate(
+        queryset = User.objects.select_related('profile').prefetch_related(
+            'groups'
+        ).annotate(
             flight_request_count=Count('flight_bookings', distinct=True),
             hotel_request_count=Count('hotel_bookings', distinct=True),
             search_count=Count('travel_searches', distinct=True),
@@ -870,7 +895,9 @@ class TravelAdminUserRoleAPIView(RetrieveUpdateAPIView):
     http_method_names = ['patch', 'head', 'options']
 
     def get_queryset(self):
-        return User.objects.select_related('profile').annotate(
+        return User.objects.select_related('profile').prefetch_related(
+            'groups'
+        ).annotate(
             flight_request_count=Count('flight_bookings', distinct=True),
             hotel_request_count=Count('hotel_bookings', distinct=True),
             search_count=Count('travel_searches', distinct=True),
@@ -879,12 +906,30 @@ class TravelAdminUserRoleAPIView(RetrieveUpdateAPIView):
     @transaction.atomic
     def perform_update(self, serializer):
         updated_user = serializer.save()
-        access_change = getattr(updated_user, '_admin_access_change', None)
-        if access_change:
+        role_change = getattr(updated_user, '_role_change', None)
+        if role_change:
+            previous_role, new_role = role_change
             change_message = {
-                'granted': 'Granted travel admin dashboard access.',
-                'revoked': 'Revoked travel admin dashboard access.',
-            }[access_change]
+                ('traveler', 'admin'): (
+                    'Granted travel admin dashboard access.'
+                ),
+                ('content_manager', 'admin'): (
+                    'Granted travel admin dashboard access.'
+                ),
+                ('admin', 'traveler'): (
+                    'Revoked travel admin dashboard access.'
+                ),
+                ('admin', 'content_manager'): (
+                    'Changed dashboard access from administrator to content '
+                    'manager.'
+                ),
+                ('traveler', 'content_manager'): (
+                    'Granted content manager dashboard access.'
+                ),
+                ('content_manager', 'traveler'): (
+                    'Revoked content manager dashboard access.'
+                ),
+            }[role_change]
             LogEntry.objects.log_actions(
                 user_id=self.request.user.pk,
                 queryset=[updated_user],
@@ -893,8 +938,9 @@ class TravelAdminUserRoleAPIView(RetrieveUpdateAPIView):
                 single_object=True,
             )
             logger.info(
-                'Travel admin access %s: actor_id=%s target_id=%s',
-                access_change,
+                'Dashboard role changed from %s to %s: actor_id=%s target_id=%s',
+                previous_role,
+                new_role,
                 self.request.user.pk,
                 updated_user.pk,
             )

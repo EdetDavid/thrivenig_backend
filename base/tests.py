@@ -228,6 +228,17 @@ class FlexibleRegistrationPasswordTests(TestCase):
                 )
                 self.assertEqual(login_response.status_code, 200, login_response.data)
                 self.assertIn("token", login_response.data)
+                self.assertEqual(
+                    login_response.data["user"]["username"],
+                    username,
+                )
+                self.assertEqual(
+                    login_response.data["user"]["role"],
+                    "traveler",
+                )
+                self.assertFalse(
+                    login_response.data["user"]["can_manage_content"]
+                )
 
         self.assertEqual(send_email.call_count, len(passwords) * 2)
 
