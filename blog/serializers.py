@@ -1,9 +1,101 @@
+import warnings
+
 from django.db import IntegrityError, transaction
 from django.db.models import Q
+from django.conf import settings
 from django.utils.text import slugify
+from PIL import Image, UnidentifiedImageError
 from rest_framework import serializers
 
 from .models import BlogCategory, BlogPost, BlogTag
+
+
+BLOG_IMAGE_FORMATS = {
+    'GIF': 'image/gif',
+    'JPEG': 'image/jpeg',
+    'PNG': 'image/png',
+    'WEBP': 'image/webp',
+}
+
+
+class BlogImageUploadSerializer(serializers.Serializer):
+    image = serializers.FileField(
+        allow_empty_file=False,
+        write_only=True,
+    )
+
+    def validate_image(self, uploaded_file):
+        max_size = settings.BLOG_IMAGE_MAX_SIZE_BYTES
+        if uploaded_file.size > max_size:
+            raise serializers.ValidationError(
+                'Image files must be 5 MiB or smaller.'
+            )
+
+        declared_type = str(
+            getattr(uploaded_file, 'content_type', '') or ''
+        ).lower()
+        if declared_type not in BLOG_IMAGE_FORMATS.values():
+            raise serializers.ValidationError(
+                'Upload a JPEG, PNG, WebP, or GIF image.'
+            )
+
+        try:
+            uploaded_file.seek(0)
+            with warnings.catch_warnings():
+                warnings.simplefilter('error', Image.DecompressionBombWarning)
+                with Image.open(uploaded_file) as candidate:
+                    actual_type = BLOG_IMAGE_FORMATS.get(candidate.format)
+                    width, height = candidate.size
+                    frame_count = getattr(candidate, 'n_frames', 1)
+                    candidate.verify()
+
+            uploaded_file.seek(0)
+            with warnings.catch_warnings():
+                warnings.simplefilter('error', Image.DecompressionBombWarning)
+                with Image.open(uploaded_file) as candidate:
+                    candidate.load()
+        except (
+            Image.DecompressionBombError,
+            Image.DecompressionBombWarning,
+            UnidentifiedImageError,
+            OSError,
+            SyntaxError,
+            ValueError,
+        ) as exc:
+            raise serializers.ValidationError(
+                'Upload a valid, readable image file.'
+            ) from exc
+        finally:
+            uploaded_file.seek(0)
+
+        if actual_type is None:
+            raise serializers.ValidationError(
+                'Upload a JPEG, PNG, WebP, or GIF image.'
+            )
+        if declared_type != actual_type:
+            raise serializers.ValidationError(
+                'The uploaded file type does not match its image content.'
+            )
+        if width <= 0 or height <= 0:
+            raise serializers.ValidationError(
+                'Image dimensions must be greater than zero.'
+            )
+        if width * height > settings.BLOG_IMAGE_MAX_PIXELS:
+            raise serializers.ValidationError(
+                'Image dimensions are too large.'
+            )
+        if frame_count > 1:
+            raise serializers.ValidationError(
+                'Animated images are not supported.'
+            )
+
+        self.image_metadata = {
+            'width': width,
+            'height': height,
+            'content_type': actual_type,
+            'size_bytes': uploaded_file.size,
+        }
+        return uploaded_file
 
 
 def normalize_label(value):
@@ -143,6 +235,10 @@ class BlogPostDetailSerializer(BlogPostListSerializer):
 
 
 class BlogPostAdminSerializer(serializers.ModelSerializer):
+    channel = serializers.ChoiceField(
+        choices=BlogPost.CHANNEL_CHOICES,
+        read_only=True,
+    )
     slug = serializers.CharField(required=False, max_length=220)
     category = serializers.CharField(max_length=80, allow_blank=False)
     tags = TagNameListField(required=False, allow_empty=True, max_length=12)
@@ -153,6 +249,7 @@ class BlogPostAdminSerializer(serializers.ModelSerializer):
         model = BlogPost
         fields = [
             'id',
+            'channel',
             'slug',
             'title',
             'excerpt',
@@ -174,6 +271,7 @@ class BlogPostAdminSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             'id',
+            'channel',
             'author_name',
             'read_time_minutes',
             'created_at',
@@ -232,7 +330,14 @@ class BlogPostAdminSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {'slug': 'Enter a valid URL slug.'}
             )
-        slug_query = BlogPost.objects.filter(slug__iexact=normalized_slug)
+        channel = self.context.get(
+            'channel',
+            getattr(self.instance, 'channel', BlogPost.CHANNEL_TRAVEL),
+        )
+        slug_query = BlogPost.objects.filter(
+            channel=channel,
+            slug__iexact=normalized_slug,
+        )
         if self.instance is not None:
             slug_query = slug_query.exclude(pk=self.instance.pk)
         if slug_query.exists():
@@ -262,11 +367,16 @@ class BlogPostAdminSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        channel = self.context.get('channel', BlogPost.CHANNEL_TRAVEL)
         category_name = validated_data.pop('category')
         tag_names = validated_data.pop('tags', [])
         category = resolve_named_object(BlogCategory, category_name)
         tags = [resolve_named_object(BlogTag, name) for name in tag_names]
-        post = BlogPost.objects.create(category=category, **validated_data)
+        post = BlogPost.objects.create(
+            category=category,
+            channel=channel,
+            **validated_data,
+        )
         post.tags.set(tags)
         return post
 

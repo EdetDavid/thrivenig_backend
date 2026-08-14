@@ -2,6 +2,8 @@ from pathlib import Path
 import os
 import environ
 
+from backend.storage_config import build_blog_media_storage_config
+
 # Initialize environment variables
 env = environ.Env(
     # Set casting and default values
@@ -244,6 +246,8 @@ if DEBUG:
         *CORS_ALLOWED_ORIGINS,
         'http://localhost:3000',
         'http://127.0.0.1:3000',
+        'http://localhost:3001',
+        'http://127.0.0.1:3001',
     ]))
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=["https://*.vercel.app"])
 
@@ -267,10 +271,43 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_STORAGE_BACKEND = env(
+    'MEDIA_STORAGE_BACKEND',
+    default='django.core.files.storage.FileSystemStorage',
+)
+MEDIA_STORAGE_OPTIONS = env.json('MEDIA_STORAGE_OPTIONS', default={})
+USE_B2_STORAGE = env.bool('USE_B2_STORAGE', default=False)
+BLOG_MEDIA_STORAGE = build_blog_media_storage_config(
+    debug=DEBUG,
+    use_b2_storage=USE_B2_STORAGE,
+    key_id=env('B2_KEY_ID', default=''),
+    application_key=env('B2_APPLICATION_KEY', default=''),
+    bucket_name=env('B2_BUCKET_NAME', default=''),
+    endpoint=env('B2_ENDPOINT', default=''),
+    region_name=env('B2_REGION_NAME', default=''),
+    public_base_url=env('B2_PUBLIC_BASE_URL', default=''),
+    signed_url_ttl_seconds=env(
+        'B2_SIGNED_URL_TTL_SECONDS',
+        default='3600',
+    ),
+)
+# The development media view only serves filesystem-backed blog media. It is
+# disabled automatically when B2 is selected, even if a stale environment
+# variable still enables it.
+SERVE_MEDIA_FILES = (
+    env.bool('SERVE_MEDIA_FILES', default=DEBUG) and not USE_B2_STORAGE
+)
+BLOG_IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024
+BLOG_IMAGE_MAX_PIXELS = env.int(
+    'BLOG_IMAGE_MAX_PIXELS',
+    default=40_000_000,
+)
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": MEDIA_STORAGE_BACKEND,
+        "OPTIONS": MEDIA_STORAGE_OPTIONS,
     },
+    "blog_media": BLOG_MEDIA_STORAGE,
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
@@ -296,6 +333,7 @@ REST_FRAMEWORK = {
         "hotel_booking": "5/minute",
         "hotel_locations": "30/minute",
         "hotel_search": "10/minute",
+        "blog_image_upload": "60/hour",
     },
     "NUM_PROXIES": DRF_NUM_PROXIES,
 }

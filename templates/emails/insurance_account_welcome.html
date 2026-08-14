@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+    <div style="max-width: 600px; margin: auto; padding: 20px; background: #ffffff; border-radius: 12px; border: 1px solid #e5e5e5;">
+      <h1 style="color: #181344;">Welcome to Thrive Insurance!</h1>
+      <p>Hi {{ user.first_name|default:user.username }},</p>
+      <p>Thanks for creating an account with Thrive Insurance.</p>
+
+      <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #181344; margin-top: 0;">Your Account Details</h3>
+        <p style="margin: 0;">
+          Username: <strong>{{ user.username }}</strong>
+          <br />Email: <strong>{{ user.email }}</strong>
+        </p>
+      </div>
+
+      <p>You can now sign in with the username and password you registered.</p>
+      <p style="margin-top: 30px;">Best regards,<br />The Thrive Insurance Team</p>
+    </div>
+  </body>
+</html>

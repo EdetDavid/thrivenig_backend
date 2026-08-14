@@ -1,5 +1,6 @@
 import math
 import re
+import uuid
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -10,7 +11,26 @@ from django.db.models.functions import Lower
 from django.utils.text import slugify
 from django.utils import timezone
 
+from .storage import blog_media_storage
 from .validators import validate_markdown_content
+
+
+BLOG_IMAGE_EXTENSIONS = {
+    'image/gif': '.gif',
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'image/webp': '.webp',
+}
+
+
+def blog_image_upload_to(instance, filename):
+    """Generate a non-user-controlled, date-partitioned storage key."""
+    extension = BLOG_IMAGE_EXTENSIONS[instance.content_type]
+    uploaded_at = timezone.now()
+    return (
+        f'blog/{instance.channel}/images/{uploaded_at:%Y/%m}/'
+        f'{uuid.uuid4().hex}{extension}'
+    )
 
 
 def normalize_slug(value, field_name='slug'):
@@ -65,6 +85,13 @@ class BlogTag(models.Model):
 
 
 class BlogPost(models.Model):
+    CHANNEL_TRAVEL = 'travel'
+    CHANNEL_INSURANCE = 'insurance'
+    CHANNEL_CHOICES = [
+        (CHANNEL_TRAVEL, 'Travel'),
+        (CHANNEL_INSURANCE, 'Insurance'),
+    ]
+
     STATUS_DRAFT = 'draft'
     STATUS_PUBLISHED = 'published'
     STATUS_ARCHIVED = 'archived'
@@ -81,6 +108,12 @@ class BlogPost(models.Model):
         blank=True,
         null=True,
     )
+    channel = models.CharField(
+        max_length=12,
+        choices=CHANNEL_CHOICES,
+        default=CHANNEL_TRAVEL,
+        db_index=True,
+    )
     category = models.ForeignKey(
         BlogCategory,
         on_delete=models.PROTECT,
@@ -92,7 +125,7 @@ class BlogPost(models.Model):
         blank=True,
     )
     title = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=220, unique=True)
+    slug = models.SlugField(max_length=220)
     excerpt = models.CharField(max_length=360)
     content = models.TextField(
         validators=[
@@ -121,18 +154,19 @@ class BlogPost(models.Model):
         ordering = ('-published_at', '-created_at', '-id')
         indexes = [
             models.Index(
-                fields=('status', '-published_at'),
-                name='blog_post_status_pub',
+                fields=('channel', 'status', '-published_at'),
+                name='blog_post_chan_status_pub',
             ),
             models.Index(
-                fields=('category', '-published_at'),
-                name='blog_post_cat_pub',
+                fields=('channel', 'category', '-published_at'),
+                name='blog_post_chan_cat_pub',
             ),
         ]
         constraints = [
             models.UniqueConstraint(
+                'channel',
                 Lower('slug'),
-                name='blog_post_slug_ci_uniq',
+                name='blog_post_chan_slug_ci_uniq',
             ),
             models.CheckConstraint(
                 condition=(
@@ -159,6 +193,8 @@ class BlogPost(models.Model):
     def author_name(self):
         if self.author_id and self.author:
             return self.author.get_full_name().strip() or self.author.username
+        if self.channel == self.CHANNEL_INSURANCE:
+            return 'Thrive Insurance Editorial Team'
         return 'Thrive Travels Editorial Team'
 
     @property
@@ -196,3 +232,36 @@ class BlogPostView(models.Model):
 
     def __str__(self):
         return f'View of {self.post_id} at {self.viewed_at.isoformat()}'
+
+
+class BlogImage(models.Model):
+    """A durable storage reference for an image uploaded in the blog editor."""
+
+    image = models.ImageField(
+        upload_to=blog_image_upload_to,
+        storage=blog_media_storage,
+    )
+    channel = models.CharField(
+        max_length=12,
+        choices=BlogPost.CHANNEL_CHOICES,
+        default=BlogPost.CHANNEL_TRAVEL,
+        db_index=True,
+    )
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name='blog_images',
+        blank=True,
+        null=True,
+    )
+    width = models.PositiveIntegerField()
+    height = models.PositiveIntegerField()
+    content_type = models.CharField(max_length=20)
+    size_bytes = models.PositiveBigIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-created_at', '-id')
+
+    def __str__(self):
+        return self.image.name

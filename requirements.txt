@@ -10,6 +10,7 @@ Django==6.1
 django-cors-headers==4.9.0
 django-environ==0.14.0
 django-ses==4.7.2
+django-storages==1.14.6
 djangorestframework==3.18.0
 future==1.0.0
 geocoder==1.38.1

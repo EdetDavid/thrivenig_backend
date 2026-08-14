@@ -310,19 +310,35 @@ class RegisterUser(CreateAPIView):
 
     def perform_create(self, serializer):
         user = serializer.save()
+        registration_site = serializer.validated_data.get('site', 'travel')
+        is_insurance = registration_site == 'insurance'
         user_html_content = render_to_string(
-            "emails/account_welcome.html",
+            (
+                "emails/insurance_account_welcome.html"
+                if is_insurance
+                else "emails/account_welcome.html"
+            ),
             {"user": user},
         )
         agency_html_content = render_to_string(
-            "emails/new_user_registration.html",
+            (
+                "emails/insurance_new_user_registration.html"
+                if is_insurance
+                else "emails/new_user_registration.html"
+            ),
             {"user": user},
         )
-        send_email("Welcome to Thrive Travels", user_html_content, [user.email])
+        brand_name = 'Thrive Insurance' if is_insurance else 'Thrive Travels'
+        agency_recipients = (
+            settings.INSURANCE_AGENCY_EMAILS
+            if is_insurance
+            else settings.ADMIN_EMAILS
+        )
+        send_email(f"Welcome to {brand_name}", user_html_content, [user.email])
         send_email(
-            f"New Thrive Travels User Registered - {user.email}",
+            f"New {brand_name} User Registered - {user.email}",
             agency_html_content,
-            settings.ADMIN_EMAILS,
+            agency_recipients,
         )
 
 

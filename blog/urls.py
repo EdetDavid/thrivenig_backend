@@ -28,3 +28,27 @@ urlpatterns = [
         name='category-list',
     ),
 ]
+
+
+insurance_urlpatterns = [
+    path(
+        'posts/',
+        BlogPostListAPIView.as_view(channel='insurance'),
+        name='insurance-post-list',
+    ),
+    path(
+        'posts/<slug:slug>/views/',
+        BlogPostViewAPIView.as_view(channel='insurance'),
+        name='insurance-post-view',
+    ),
+    path(
+        'posts/<slug:slug>/',
+        BlogPostDetailAPIView.as_view(channel='insurance'),
+        name='insurance-post-detail',
+    ),
+    path(
+        'categories/',
+        BlogCategoryListAPIView.as_view(channel='insurance'),
+        name='insurance-category-list',
+    ),
+]

@@ -15,18 +15,21 @@ from rest_framework.generics import (
     RetrieveUpdateDestroyAPIView,
 )
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from base.permissions import CanManageContent
 
-from .models import BlogCategory, BlogPost, BlogPostView
+from .models import BlogCategory, BlogImage, BlogPost, BlogPostView
 from .serializers import (
     BlogAnalyticsQuerySerializer,
     BlogAdminPostQuerySerializer,
     BlogCategorySerializer,
+    BlogImageUploadSerializer,
     BlogPostAdminSerializer,
     BlogPostDetailSerializer,
     BlogPostListSerializer,
@@ -35,15 +38,42 @@ from .serializers import (
 )
 
 
-def blog_post_queryset():
-    return BlogPost.objects.select_related(
+class BlogImageUploadAPIView(APIView):
+    permission_classes = [CanManageContent]
+    parser_classes = [MultiPartParser, FormParser]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'blog_image_upload'
+    channel = BlogPost.CHANNEL_TRAVEL
+
+    def post(self, request):
+        serializer = BlogImageUploadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        uploaded_file = serializer.validated_data['image']
+        metadata = serializer.image_metadata
+        blog_image = BlogImage.objects.create(
+            image=uploaded_file,
+            channel=self.channel,
+            uploaded_by=request.user,
+            **metadata,
+        )
+        return Response(
+            {
+                'url': request.build_absolute_uri(blog_image.image.url),
+                **metadata,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+def blog_post_queryset(channel=BlogPost.CHANNEL_TRAVEL):
+    return BlogPost.objects.filter(channel=channel).select_related(
         'author',
         'category',
     ).prefetch_related('tags')
 
 
-def public_blog_post_queryset():
-    return blog_post_queryset().filter(
+def public_blog_post_queryset(channel=BlogPost.CHANNEL_TRAVEL):
+    return blog_post_queryset(channel).filter(
         status=BlogPost.STATUS_PUBLISHED,
         published_at__isnull=False,
         published_at__lte=timezone.now(),
@@ -94,6 +124,7 @@ class BlogPostListAPIView(ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = BlogPostListSerializer
     pagination_class = BlogPagination
+    channel = BlogPost.CHANNEL_TRAVEL
 
     def get_queryset(self):
         query_serializer = BlogPostQuerySerializer(
@@ -101,7 +132,7 @@ class BlogPostListAPIView(ListAPIView):
         )
         query_serializer.is_valid(raise_exception=True)
         return filter_blog_posts(
-            public_blog_post_queryset(),
+            public_blog_post_queryset(self.channel),
             query_serializer.validated_data,
         )
 
@@ -110,9 +141,10 @@ class BlogPostDetailAPIView(RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = BlogPostDetailSerializer
     lookup_field = 'slug'
+    channel = BlogPost.CHANNEL_TRAVEL
 
     def get_queryset(self):
-        return public_blog_post_queryset()
+        return public_blog_post_queryset(self.channel)
 
 
 def hash_visitor_identifier(visitor_id):
@@ -127,6 +159,7 @@ def hash_visitor_identifier(visitor_id):
 class BlogPostViewAPIView(APIView):
     permission_classes = [AllowAny]
     deduplication_window = timedelta(minutes=30)
+    channel = BlogPost.CHANNEL_TRAVEL
 
     def post(self, request, slug):
         serializer = BlogPostViewSerializer(data=request.data)
@@ -141,6 +174,7 @@ class BlogPostViewAPIView(APIView):
         with transaction.atomic():
             post = get_object_or_404(
                 BlogPost.objects.select_for_update().filter(
+                    channel=self.channel,
                     status=BlogPost.STATUS_PUBLISHED,
                     published_at__isnull=False,
                     published_at__lte=now,
@@ -173,6 +207,7 @@ class BlogCategoryListAPIView(ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = BlogCategorySerializer
     pagination_class = None
+    channel = BlogPost.CHANNEL_TRAVEL
 
     def get_queryset(self):
         now = timezone.now()
@@ -181,6 +216,7 @@ class BlogCategoryListAPIView(ListAPIView):
                 'posts',
                 filter=Q(
                     posts__status=BlogPost.STATUS_PUBLISHED,
+                    posts__channel=self.channel,
                     posts__published_at__isnull=False,
                     posts__published_at__lte=now,
                 ),
@@ -193,13 +229,20 @@ class BlogAdminPostListAPIView(ListCreateAPIView):
     permission_classes = [CanManageContent]
     serializer_class = BlogPostAdminSerializer
     pagination_class = BlogAdminPagination
+    channel = BlogPost.CHANNEL_TRAVEL
+
+    def get_serializer_context(self):
+        return {
+            **super().get_serializer_context(),
+            'channel': self.channel,
+        }
 
     def get_queryset(self):
         query_serializer = BlogAdminPostQuerySerializer(
             data=self.request.query_params.dict()
         )
         query_serializer.is_valid(raise_exception=True)
-        queryset = blog_post_queryset()
+        queryset = blog_post_queryset(self.channel)
         if not self.request.user.is_staff:
             queryset = queryset.filter(author=self.request.user)
         queryset = filter_blog_posts(
@@ -218,9 +261,16 @@ class BlogAdminPostListAPIView(ListCreateAPIView):
 class BlogAdminPostDetailAPIView(RetrieveUpdateDestroyAPIView):
     permission_classes = [CanManageContent]
     serializer_class = BlogPostAdminSerializer
+    channel = BlogPost.CHANNEL_TRAVEL
+
+    def get_serializer_context(self):
+        return {
+            **super().get_serializer_context(),
+            'channel': self.channel,
+        }
 
     def get_queryset(self):
-        queryset = blog_post_queryset()
+        queryset = blog_post_queryset(self.channel)
         if not self.request.user.is_staff:
             queryset = queryset.filter(author=self.request.user)
         return queryset
@@ -234,6 +284,7 @@ class BlogAdminPostDetailAPIView(RetrieveUpdateDestroyAPIView):
 
 class BlogAnalyticsAPIView(APIView):
     permission_classes = [CanManageContent]
+    channel = BlogPost.CHANNEL_TRAVEL
 
     def get(self, request):
         query_serializer = BlogAnalyticsQuerySerializer(
@@ -256,7 +307,7 @@ class BlogAnalyticsAPIView(APIView):
             )
         )
 
-        scoped_posts = blog_post_queryset()
+        scoped_posts = blog_post_queryset(self.channel)
         scope = 'all'
         if not request.user.is_staff:
             scope = 'author'

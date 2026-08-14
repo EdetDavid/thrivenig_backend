@@ -76,12 +76,17 @@ class UserSerializerWithToken(serializers.ModelSerializer):
         style={'input_type': 'password'},
     )
     token = serializers.SerializerMethodField(read_only=True)
+    site = serializers.ChoiceField(
+        choices=('travel', 'insurance'),
+        default='travel',
+        write_only=True,
+    )
     phone = serializers.CharField(source='profile.phone', allow_blank=True, required=False)
     address = serializers.CharField(source='profile.address', allow_blank=True, required=False)
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "password", "token", "first_name", "last_name", "phone", "address"]
+        fields = ["id", "username", "email", "password", "token", "first_name", "last_name", "phone", "address", "site"]
 
     def get_token(self, obj):
         token, _ = Token.objects.get_or_create(user=obj)
@@ -95,6 +100,7 @@ class UserSerializerWithToken(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
+        validated_data.pop('site', 'travel')
         profile_data = validated_data.pop('profile', {})
         user = User.objects.create_user(
             username=validated_data.get('username'),
